@@ -1,0 +1,24 @@
+# Secrets: không bao giờ commit
+.env
+.env.*
+!.env.example
+*.key
+secrets/
+
+# Log thô và dữ liệu chạy (có thể rất nặng)
+results/raw/
+logs/
+*.log
+traces/
+
+# File tạm của broker/mock khi chạy local
+mosquitto/data/
+mosquitto/log/
+*.db
+*.sqlite
+
+# Editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
