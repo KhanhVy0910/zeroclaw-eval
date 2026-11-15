@@ -1,0 +1,44 @@
+# Default Hardware World Fixture for Hardware Gateway
+# Initial state for mini smart factory nodes
+
+nodes:
+  n1:
+    board: "esp32"
+    name: "Production Control"
+    state:
+      fan: 0
+      status_led: 0
+      line_state: "running"
+      machine_status: "ok"
+      temperature: 45.2
+      humidity: 82.0
+      pins:
+        2: 0   # fan / status led
+        5: 0   # motion sensor
+        12: 0  # reading lamp
+        13: 0  # overhead light
+        14: 0  # heater
+
+  n2:
+    board: "pico_w"
+    name: "Environmental Monitoring"
+    state:
+      temperature: 24.5
+      humidity: 60.0
+
+  n3:
+    board: "arduino_uno"
+    name: "Warehouse & Material Handling"
+    state:
+      rfid_tag: "BATCH-A100"
+      rfid_valid: true
+      gate_open: false
+      inventory: 150
+
+  n4:
+    board: "stm32"
+    name: "Machine Health & Safety"
+    state:
+      vibration: 0.12
+      machine_health: "nominal"
+      emergency_stop: false

@@ -1,0 +1,18 @@
+[package]
+name = "production-plugin"
+version = "0.1.0"
+edition = "2024"
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+wit-bindgen = "0.46"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+waki = "0.5.1"
+
+[profile.release]
+opt-level = "s"
+lto = true
+strip = true

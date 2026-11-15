@@ -1,0 +1,99 @@
+# ==============================================================================
+# ZeroClaw Tool Catalog Configuration for Mock Industrial Gateway
+# Derived from local ZeroClaw codebase inspection (crates/zeroclaw-hardware)
+# ==============================================================================
+
+version: "1.0.0"
+description: "Tool definitions exposed by ZeroClaw peripherals and mock hardware nodes"
+
+tools:
+  - name: gpio_read
+    description: "Read the value (0 or 1) of a GPIO pin on a connected peripheral (e.g. STM32 Nucleo)"
+    parameters:
+      type: object
+      properties:
+        pin:
+          type: integer
+          description: "GPIO pin number (e.g. 13 for LED on Nucleo)"
+      required:
+        - pin
+    target_nodes:
+      - esp32
+      - pico_w
+      - arduino_uno
+      - stm32
+
+  - name: gpio_write
+    description: "Set a GPIO pin high (1) or low (0) on a connected peripheral (e.g. turn on/off LED)"
+    parameters:
+      type: object
+      properties:
+        pin:
+          type: integer
+          description: "GPIO pin number"
+        value:
+          type: integer
+          description: "0 for low, 1 for high"
+      required:
+        - pin
+        - value
+    target_nodes:
+      - esp32
+      - pico_w
+      - arduino_uno
+      - stm32
+
+  - name: set_device
+    description: "Turn a smart-room device on or off by NAME. The hardware pin wiring is handled internally. Available devices: reading_lamp, overhead_light, heater, fan."
+    parameters:
+      type: object
+      properties:
+        device:
+          type: string
+          enum:
+            - reading_lamp
+            - overhead_light
+            - heater
+            - fan
+          description: "Device name"
+        state:
+          type: string
+          enum:
+            - "on"
+            - "off"
+          description: "Target state: on = energize, off = de-energize"
+      required:
+        - device
+        - state
+    target_nodes:
+      - esp32
+
+  - name: read_device
+    description: "Read the current state of a smart-room input device by NAME. Currently only motion_sensor is supported."
+    parameters:
+      type: object
+      properties:
+        device:
+          type: string
+          enum:
+            - motion_sensor
+          description: "Input device name"
+      required:
+        - device
+    target_nodes:
+      - esp32
+
+  - name: hardware_capabilities
+    description: "Query connected hardware for reported GPIO pins and LED pin. Use when: user asks what pins are available."
+    parameters:
+      type: object
+      properties:
+        board:
+          type: string
+          description: "Optional board name. If omitted, queries all."
+      required: []
+    target_nodes:
+      - esp32
+      - pico_w
+      - arduino_uno
+      - stm32

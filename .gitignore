@@ -1,24 +1,71 @@
-# Secrets: không bao giờ commit
+# ==============================================================================
+# Git Ignore Configuration for zeroclaw-eval
+# ==============================================================================
+
+# --- Secrets and Environment Variables ---
 .env
 .env.*
 !.env.example
-*.key
-secrets/
+.secret_key
+config/.secret_key
+config/data/
 
-# Log thô và dữ liệu chạy (có thể rất nặng)
-results/raw/
-logs/
+
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+.venv/
+venv/
+ENV/
+env/
+
+# --- Rust & WebAssembly ---
+target/
+**/*.rs.bk
+Cargo.lock
+
+# --- Temporary Logs & OS Artifacts ---
 *.log
+*.tmp
+*.temp
+logs/
 traces/
-
-# File tạm của broker/mock khi chạy local
-mosquitto/data/
-mosquitto/log/
-*.db
-*.sqlite
-
-# Editor / OS
-.vscode/
-.idea/
+state/
+.system_generated/
 .DS_Store
 Thumbs.db
+Desktop.ini
+
+# --- IDE & Tooling ---
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+.pytest_cache/
+.coverage
+htmlcov/
+
+# --- Benchmark & Evaluation Raw Results ---
+# Keep directory structure via .gitkeep, ignore raw execution dumps
+results/raw/*
+!results/raw/.gitkeep

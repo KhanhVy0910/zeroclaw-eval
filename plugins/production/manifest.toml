@@ -1,0 +1,10 @@
+name = "production"
+version = "0.1.0"
+description = "Production control plugin for Smart Factory Node N1 (ESP32 DevKit)"
+author = "ZeroClaw Evaluation Team"
+wasm_path = "production.wasm"
+capabilities = ["tool"]
+permissions = ["http_client"]
+
+[egress]
+hosts = ["127.0.0.1"]

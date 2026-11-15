@@ -1,0 +1,43 @@
+schema_version = 3
+
+[providers.models.gemini.gemini]
+api_key = "enc2:3500acdd4947d16971d5d19f6ac46e5a587eb702409725c8b64fa1d7b82217f4649b995bd1da444b2f9e19eb00483f5ed9371e6ea204dba89a6e8d35000f04fad1464b9517ab6723e478829898e840ea39"
+model = "gemini-3.5-flash-lite"
+
+[agents.default]
+model_provider = "gemini.gemini"
+risk_profile = "full_auto"
+runtime_profile = "default"
+
+[risk_profiles.full_auto]
+level = "full"
+auto_approve = ["*"]
+allowed_commands = ["*"]
+
+[runtime_profiles.default]
+compact_context = false
+max_context_tokens = 128000
+max_tool_iterations = 25
+
+[plugins]
+enabled = true
+plugins_dir = "E:/gateway/zeroclaw-eval/plugins/dist"
+auto_discover = true
+
+[[plugins.entries]]
+name = "zpi1_WyJwcm9kdWN0aW9uIiwidG9vbCIsInByb2R1Y3Rpb24iXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "production"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[peripherals]
+enabled = false
+
+[observability]
+log_persistence = "full"
+log_persistence_path = "state/runtime-trace.jsonl"
+log_tool_io = "full"

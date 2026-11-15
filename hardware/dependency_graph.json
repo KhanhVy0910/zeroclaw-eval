@@ -1,0 +1,101 @@
+{
+  "version": "1.0.0",
+  "project": "zeroclaw-eval",
+  "description": "Dependency and topology graph for Mini Smart Factory physical hardware nodes and ZeroClaw WASM plugins",
+  "gateway": {
+    "host": "127.0.0.1",
+    "port": 8000,
+    "protocol": "http"
+  },
+  "nodes": {
+    "N1": {
+      "id": "N1",
+      "name": "Node 1 - Production Line Controller",
+      "hardware": "ESP32",
+      "default_port": "COM3",
+      "baud_rate": 115200,
+      "plugins": ["production"],
+      "sensors": ["optical_encoder", "proximity_sensor", "conveyor_tachometer"],
+      "actuators": ["conveyor_motor", "sorting_servo", "status_tower_light"],
+      "shared": false
+    },
+    "N2": {
+      "id": "N2",
+      "name": "Node 2 - Smart Warehouse & Material Handling",
+      "hardware": "Raspberry Pi Pico W",
+      "default_port": "COM4",
+      "baud_rate": 115200,
+      "plugins": ["warehouse"],
+      "sensors": ["rfid_scanner", "ultrasonic_distance", "load_cell"],
+      "actuators": ["stepper_lifter", "gate_servo", "buzzer"],
+      "shared": false
+    },
+    "N3": {
+      "id": "N3",
+      "name": "Node 3 - Factory Environmental Monitor",
+      "hardware": "Arduino Uno",
+      "default_port": "COM5",
+      "baud_rate": 9600,
+      "plugins": ["environment"],
+      "sensors": ["dht22_temp_humidity", "mq2_smoke_gas", "ambient_light_ldr"],
+      "actuators": ["ventilation_fan", "exhaust_relay", "alarm_led"],
+      "shared": false
+    },
+    "N4": {
+      "id": "N4",
+      "name": "Node 4 - Predictive Maintenance & Industrial Safety",
+      "hardware": "STM32",
+      "default_port": "COM6",
+      "baud_rate": 115200,
+      "plugins": ["maintenance", "safety"],
+      "sensors": ["mpu6050_vibration", "mlx90614_ir_thermal", "emergency_stop_button", "flame_sensor"],
+      "actuators": ["safety_power_relay", "emergency_klaxon", "cooling_subsystem"],
+      "shared": true,
+      "sharing_policy": {
+        "mechanism": "gateway_mutex_lock",
+        "arbitration": "priority_preemption",
+        "priority_order": ["safety", "maintenance"],
+        "max_lock_duration_ms": 2000
+      }
+    }
+  },
+  "plugin_node_mapping": {
+    "production": ["N1"],
+    "warehouse": ["N2"],
+    "environment": ["N3"],
+    "maintenance": ["N4"],
+    "safety": ["N4"]
+  },
+  "dependencies": [
+    {
+      "from": "plugins.safety",
+      "to": "hardware.nodes.N4",
+      "type": "direct_exclusive_preemptive",
+      "endpoint": "/nodes/N4/safety"
+    },
+    {
+      "from": "plugins.maintenance",
+      "to": "hardware.nodes.N4",
+      "type": "queued_request",
+      "endpoint": "/nodes/N4/maintenance"
+    },
+    {
+      "from": "plugins.production",
+      "to": "hardware.nodes.N1",
+      "type": "direct_stream",
+      "endpoint": "/nodes/N1/production"
+    },
+    {
+      "from": "plugins.warehouse",
+      "to": "hardware.nodes.N2",
+      "type": "direct_stream",
+      "endpoint": "/nodes/N2/warehouse"
+    },
+    {
+      "from": "plugins.environment",
+      "to": "hardware.nodes.N3",
+      "type": "polling_stream",
+      "endpoint": "/nodes/N3/environment"
+    }
+  ]
+}
