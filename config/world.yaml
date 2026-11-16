@@ -1,0 +1,130 @@
+# Hardware Gateway World Configuration (4 Industrial Nodes)
+# All nodes and channels are simulated for ZeroClaw Evaluation.
+
+schema_version: "2.0"
+simulated_environment: true
+
+nodes:
+  n1:
+    id: "n1"
+    name: "Production Control"
+    board: "ESP32 DevKit"
+    channel: "simulated_http://127.0.0.1:8000/api/v1/n1"
+    simulated: true
+    permissions:
+      read: true
+      write: true
+    devices:
+      - name: "fan"
+        type: "actuator"
+        description: "Cooling fan (0=off, 1=on)"
+        channel: "gpio_pin_2"
+      - name: "status_led"
+        type: "actuator"
+        description: "Station status LED (0=off, 1=on)"
+        channel: "gpio_pin_5"
+      - name: "line_state"
+        type: "actuator_state"
+        description: "Production line operating state ('running' or 'holding')"
+        channel: "internal_state"
+      - name: "machine_status"
+        type: "sensor"
+        description: "Machine health status ('ok' or 'fault')"
+        channel: "internal_state"
+    initial_state:
+      fan: 0
+      status_led: 0
+      line_state: "running"
+      machine_status: "ok"
+      temperature: 45.2
+      humidity: 82.0
+      pins:
+        2: 0
+        5: 0
+
+  n2:
+    id: "n2"
+    name: "Environmental Monitoring"
+    board: "Raspberry Pi Pico W"
+    channel: "simulated_http://127.0.0.1:8000/api/v1/n2"
+    simulated: true
+    permissions:
+      read: true
+      write: false
+    devices:
+      - name: "temperature"
+        type: "sensor"
+        description: "Ambient environmental temperature in Celsius"
+        channel: "adc_ch0"
+        unit: "C"
+      - name: "humidity"
+        type: "sensor"
+        description: "Ambient environmental relative humidity percentage"
+        channel: "adc_ch1"
+        unit: "%"
+    initial_state:
+      temperature: 24.5
+      humidity: 60.0
+
+  n3:
+    id: "n3"
+    name: "Warehouse & Material Handling"
+    board: "Arduino Uno R3"
+    channel: "simulated_http://127.0.0.1:8000/api/v1/n3"
+    simulated: true
+    permissions:
+      read: true
+      write: true # Only servo gate is writable; RFID & inventory are read-only
+    devices:
+      - name: "rfid"
+        type: "sensor"
+        description: "RFID reader for raw material batch tracking (tag and validity)"
+        channel: "spi_rfid_rc522"
+      - name: "distance"
+        type: "sensor"
+        description: "Ultrasonic distance sensor for dock detection (cm)"
+        channel: "ultrasonic_hc_sr04"
+        unit: "cm"
+      - name: "gate"
+        type: "actuator"
+        description: "Warehouse gate barrier servo (false=closed, true=open)"
+        channel: "pwm_pin_9"
+      - name: "inventory"
+        type: "sensor_state"
+        description: "Simple raw material units inventory count"
+        channel: "internal_counter"
+        unit: "units"
+    initial_state:
+      rfid_tag: "BATCH-A100"
+      rfid_valid: true
+      distance: 15.0
+      gate_open: false
+      inventory: 150
+
+  n4:
+    id: "n4"
+    name: "Machine Health & Safety"
+    board: "STM32 Nucleo-F401RE"
+    channel: "simulated_http://127.0.0.1:8000/api/v1/n4"
+    simulated: true
+    permissions:
+      read: true
+      write: false # Business actions cannot write; Emergency Stop only controlled via admin
+    devices:
+      - name: "vibration"
+        type: "sensor"
+        description: "Machine vibration sensor (mm/s)"
+        channel: "i2c_accel_mpu6050"
+        unit: "mm/s"
+      - name: "machine_health"
+        type: "sensor"
+        description: "Machine operational health condition ('nominal', 'warning', 'critical')"
+        channel: "internal_diagnostic"
+      - name: "emergency_stop"
+        type: "safety_interlock"
+        description: "Hardware Emergency Stop button state (false=released/normal, true=engaged/emergency)"
+        channel: "hardware_estop_relay"
+    initial_state:
+      vibration: 0.12
+      machine_health: "nominal"
+      emergency_stop: false

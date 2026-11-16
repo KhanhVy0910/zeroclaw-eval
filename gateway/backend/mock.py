@@ -1,4 +1,4 @@
-"""In-memory Mock Backend for Hardware Gateway."""
+"""In-memory Mock Backend for Hardware Gateway (Nodes N1, N2, N3, N4)."""
 
 from __future__ import annotations
 
@@ -20,10 +20,11 @@ DEFAULT_FIXTURE_PATH = Path(__file__).parent.parent / "fixtures" / "default_worl
 
 
 class MockBackend(Backend):
-    """In-memory simulation of hardware nodes, initialized from fixture."""
+    """In-memory simulation of 4 industrial hardware nodes, initialized from fixture."""
 
     def __init__(self, fixture_path: Optional[Path] = None):
-        self.fixture_path = Path(fixture_path) if fixture_path else DEFAULT_FIXTURE_PATH
+        self.default_fixture_path = Path(fixture_path) if fixture_path else DEFAULT_FIXTURE_PATH
+        self.fixture_path = self.default_fixture_path
         self.nodes: Dict[str, Dict[str, Any]] = {}
         self._load_fixture()
 
@@ -40,6 +41,8 @@ class MockBackend(Backend):
         """Reset state back to initial fixture values."""
         if fixture_path:
             self.fixture_path = Path(fixture_path)
+        else:
+            self.fixture_path = self.default_fixture_path
         self._load_fixture()
 
     async def get_node_state(self, node_id: str) -> Dict[str, Any]:
@@ -74,27 +77,42 @@ class MockBackend(Backend):
     ) -> Dict[str, Any]:
         """Execute a domain action against a node."""
         params = params or {}
-        node = self.nodes.get(node_id)
+        norm_node = node_id.strip().lower()
+        node = self.nodes.get(norm_node)
         if not node:
             raise GatewayInvalidArgumentError(f"Node '{node_id}' not found")
 
         state = node.setdefault("state", {})
 
-        # Safety Check: If Emergency Stop is active, reject control / actuation commands
-        is_control_action = action in ("set_fan", "set_line_state", "open_gate", "start_motor", "write_pin")
+        # Safety Check: If Emergency Stop is active, reject ALL actuation / control actions
+        is_control_action = action in (
+            "set_fan",
+            "fan",
+            "set_line_state",
+            "line_state",
+            "set_status_led",
+            "status_led",
+            "write_pin",
+            "open_gate",
+            "close_gate",
+            "set_gate",
+            "gate",
+        )
         if is_control_action and self.is_emergency_stop_active():
             raise GatewaySafetyViolationError("Action rejected: Emergency Stop is currently ENGAGED")
 
-        # Node N1: ESP32 (Production Control)
-        if node_id == "n1":
+        # -------------------------------------------------------------
+        # NODE N1: ESP32 DevKit (Production Control)
+        # -------------------------------------------------------------
+        if norm_node == "n1":
             if action in ("get_status", "status"):
                 return {
                     "fan": state.get("fan", 0),
                     "status_led": state.get("status_led", 0),
                     "line_state": state.get("line_state", "running"),
                     "machine_status": state.get("machine_status", "ok"),
-                    "temperature": state.get("temperature", 45.0),
-                    "humidity": state.get("humidity", 80.0),
+                    "temperature": state.get("temperature", 45.2),
+                    "humidity": state.get("humidity", 82.0),
                 }
 
             elif action in ("set_fan", "fan"):
@@ -123,12 +141,22 @@ class MockBackend(Backend):
                     "pin_value": target_state,
                 }
 
-            elif action == "set_line_state":
-                line_state = params.get("line_state")
+            elif action in ("set_line_state", "line_state"):
+                line_state = params.get("line_state") or params.get("state")
                 if not line_state or line_state not in ("running", "holding", "stopped"):
                     raise GatewayInvalidArgumentError(f"Invalid line_state: {line_state}")
                 state["line_state"] = line_state
                 return {"line_state": line_state}
+
+            elif action in ("set_status_led", "status_led"):
+                val = params.get("state") if params.get("state") is not None else params.get("value")
+                if val is None:
+                    raise GatewayInvalidArgumentError("Missing 'state' parameter for status_led")
+                target_state = 1 if str(val).lower() in ("1", "true", "on") else 0
+                state["status_led"] = target_state
+                pins = state.setdefault("pins", {})
+                pins[5] = target_state
+                return {"status_led": target_state, "pin": 5}
 
             elif action == "write_pin":
                 pin = params.get("pin")
@@ -149,47 +177,169 @@ class MockBackend(Backend):
             else:
                 raise GatewayInvalidArgumentError(f"Action '{action}' not supported for node N1")
 
-        # Node N2: Pico W (Environmental Monitoring)
-        elif node_id == "n2":
+        # -------------------------------------------------------------
+        # NODE N2: Raspberry Pi Pico W (Environmental Monitoring) - READ-ONLY
+        # -------------------------------------------------------------
+        elif norm_node == "n2":
+            # Reject any write action
+            if action.startswith("set_") or action in ("write_pin", "write", "fan", "gate"):
+                raise GatewaySafetyViolationError("Node N2 is read-only; write actions are not permitted")
+
             if action in ("get_status", "get_env", "status"):
                 return {
                     "temperature": state.get("temperature", 24.5),
                     "humidity": state.get("humidity", 60.0),
                 }
+
+            elif action in ("get_temperature", "temperature"):
+                return {
+                    "temperature": state.get("temperature", 24.5),
+                    "unit": "C",
+                }
+
+            elif action in ("get_humidity", "humidity"):
+                return {
+                    "humidity": state.get("humidity", 60.0),
+                    "unit": "%",
+                }
+
             else:
                 raise GatewayInvalidArgumentError(f"Action '{action}' not supported for node N2")
 
-        # Node N3: Arduino Uno (Warehouse & Material Handling)
-        elif node_id == "n3":
+        # -------------------------------------------------------------
+        # NODE N3: Arduino Uno R3 (Warehouse & Material Handling)
+        # -------------------------------------------------------------
+        elif norm_node == "n3":
+            # Reject writes to sensors / inventory
+            if action in ("set_rfid", "set_inventory", "set_distance"):
+                raise GatewaySafetyViolationError("RFID reader and inventory counter on Node N3 are read-only")
+
             if action in ("get_status", "status"):
                 return {
                     "rfid_tag": state.get("rfid_tag", ""),
                     "rfid_valid": state.get("rfid_valid", False),
+                    "distance": state.get("distance", 15.0),
                     "gate_open": state.get("gate_open", False),
                     "inventory": state.get("inventory", 0),
                 }
+
+            elif action in ("read_rfid", "rfid"):
+                return {
+                    "rfid_tag": state.get("rfid_tag", ""),
+                    "rfid_valid": state.get("rfid_valid", False),
+                    "batch": state.get("rfid_tag", ""),
+                    "valid": state.get("rfid_valid", False),
+                }
+
+            elif action in ("get_distance", "distance"):
+                return {
+                    "distance": state.get("distance", 15.0),
+                    "unit": "cm",
+                }
+
+            elif action in ("get_inventory", "inventory"):
+                return {
+                    "inventory": state.get("inventory", 0),
+                    "unit": "units",
+                }
+
             elif action == "open_gate":
                 state["gate_open"] = True
                 return {"gate_open": True}
+
             elif action == "close_gate":
                 state["gate_open"] = False
                 return {"gate_open": False}
+
+            elif action in ("set_gate", "gate"):
+                val = params.get("state")
+                if val is None:
+                    val = params.get("gate_open")
+                if val is None:
+                    raise GatewayInvalidArgumentError("Missing 'state' parameter for set_gate")
+
+                if isinstance(val, bool):
+                    target_open = val
+                elif isinstance(val, (int, float)):
+                    target_open = bool(int(val) > 0)
+                elif isinstance(val, str):
+                    target_open = val.lower() in ("1", "true", "open", "opened")
+                else:
+                    raise GatewayInvalidArgumentError(f"Invalid gate state: {val}")
+
+                state["gate_open"] = target_open
+                return {"gate_open": target_open}
+
             else:
                 raise GatewayInvalidArgumentError(f"Action '{action}' not supported for node N3")
 
-        # Node N4: STM32 Nucleo (Machine Health & Safety)
-        elif node_id == "n4":
-            if action in ("get_status", "status"):
-                return {
-                    "vibration": state.get("vibration", 0.1),
-                    "machine_health": state.get("machine_health", "nominal"),
-                    "emergency_stop": state.get("emergency_stop", False),
-                }
-            elif action in ("trigger_emergency_stop", "reset_emergency_stop"):
-                # Safety constraint: Emergency Stop cannot be altered via domain business actions!
+        # -------------------------------------------------------------
+        # NODE N4: STM32 Nucleo-F401RE (Machine Health & Safety)
+        # -------------------------------------------------------------
+        elif norm_node == "n4":
+            # Safety constraint: Emergency Stop cannot be altered via domain business actions!
+            if action in ("trigger_emergency_stop", "set_emergency_stop", "reset_emergency_stop", "emergency_stop"):
                 raise GatewaySafetyViolationError(
                     "Emergency Stop can ONLY be changed via admin physical interlock endpoint, not business action."
                 )
+
+            # Reject any other write action on N4
+            if action.startswith("set_") or action in ("write_pin", "write"):
+                raise GatewaySafetyViolationError("Node N4 is read-only via business actions")
+
+            if action in ("get_status", "status"):
+                return {
+                    "vibration": state.get("vibration", 0.12),
+                    "machine_health": state.get("machine_health", "nominal"),
+                    "emergency_stop": state.get("emergency_stop", False),
+                }
+
+            elif action in ("get_vibration", "vibration"):
+                return {
+                    "vibration": state.get("vibration", 0.12),
+                    "unit": "mm/s",
+                }
+
+            elif action in ("get_machine_health", "machine_health"):
+                return {
+                    "machine_health": state.get("machine_health", "nominal"),
+                    "vibration": state.get("vibration", 0.12),
+                }
+
+            elif action in ("get_emergency_state", "emergency_state"):
+                is_engaged = bool(state.get("emergency_stop", False))
+                return {
+                    "emergency_stop": is_engaged,
+                    "status": "ENGAGED" if is_engaged else "RELEASED",
+                }
+
+            elif action in ("check_operation", "safety_check"):
+                is_estop = bool(state.get("emergency_stop", False))
+                health = str(state.get("machine_health", "nominal")).lower()
+                vibration = float(state.get("vibration", 0.12))
+
+                if is_estop:
+                    return {
+                        "allowed": False,
+                        "reason": "Emergency Stop is currently ENGAGED on Node N4",
+                        "emergency_stop": True,
+                        "machine_health": health,
+                    }
+                elif health == "critical" or vibration > 0.5:
+                    return {
+                        "allowed": False,
+                        "reason": f"Machine condition unsafe: health={health}, vibration={vibration} mm/s",
+                        "emergency_stop": False,
+                        "machine_health": health,
+                    }
+                else:
+                    return {
+                        "allowed": True,
+                        "reason": "All safety conditions satisfied: E-Stop released and machine health nominal",
+                        "emergency_stop": False,
+                        "machine_health": health,
+                    }
+
             else:
                 raise GatewayInvalidArgumentError(f"Action '{action}' not supported for node N4")
 

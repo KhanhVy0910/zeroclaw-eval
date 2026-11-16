@@ -1,0 +1,30 @@
+{
+  "version": "1.0",
+  "description": "Business process dependency graph between smart factory subsystems (static scenario data, not runtime gateway component)",
+  "dependencies": [
+    {
+      "source": "Warehouse (N3)",
+      "target": "Production (N1)",
+      "relation": "MaterialSupply",
+      "description": "Production line can only run if valid material batch (RFID valid) is available from Warehouse."
+    },
+    {
+      "source": "Environment (N2)",
+      "target": "Production (N1)",
+      "relation": "OperatingConditions",
+      "description": "Production quality depends on ambient temperature and humidity remaining within environmental tolerances."
+    },
+    {
+      "source": "Maintenance/Safety (N4)",
+      "target": "Production (N1)",
+      "relation": "SafetyInterlock",
+      "description": "Production line must be halted (held) if machine health is critical or Emergency Stop is engaged on N4."
+    },
+    {
+      "source": "Production (N1)",
+      "target": "Warehouse (N3)",
+      "relation": "FinishedGoodsFlow",
+      "description": "Output goods from Production trigger warehouse dock gate actuation and inventory transfer."
+    }
+  ]
+}

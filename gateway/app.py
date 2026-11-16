@@ -36,6 +36,14 @@ class FanControlRequest(BaseModel):
     state: Any = Field(..., description="Fan state: bool, int (0/1), or str ('on'/'off')")
 
 
+class LineStateRequest(BaseModel):
+    line_state: str = Field(..., description="Production line state ('running', 'holding', 'stopped')")
+
+
+class GateControlRequest(BaseModel):
+    state: Any = Field(..., description="Gate servo state: bool (true=open), str ('open'/'closed'), or int")
+
+
 class GenericActionRequest(BaseModel):
     action: str = Field(..., description="Action name to execute")
     params: Optional[Dict[str, Any]] = Field(default_factory=dict, description="Action arguments")
@@ -43,6 +51,14 @@ class GenericActionRequest(BaseModel):
 
 class NodeStateUpdateRequest(BaseModel):
     state: Dict[str, Any] = Field(..., description="State fields to update")
+
+
+class EmergencyStopAdminRequest(BaseModel):
+    emergency_stop: bool = Field(..., description="Emergency Stop state (true=engaged/emergency, false=released)")
+
+
+class LoadFixtureRequest(BaseModel):
+    fixture_path: str = Field(..., description="Absolute or relative path to fixture YAML file")
 
 
 class FaultRuleRequest(BaseModel):
@@ -63,8 +79,8 @@ def create_app(
 
     app = FastAPI(
         title="Industrial Gateway Hardware Bridge",
-        description="FastAPI Gateway interfacing ZeroClaw WASM plugins to industrial nodes",
-        version="0.2.0",
+        description="FastAPI Gateway interfacing ZeroClaw WASM plugins to industrial nodes N1..N4",
+        version="0.3.0",
     )
 
     # State instances
@@ -154,6 +170,7 @@ def create_app(
     # BUSINESS ENDPOINTS (for WASM Plugins)
     # -------------------------------------------------------------
 
+    # Node N1: Production Control
     @app.get("/api/v1/{node_id}/production/status")
     async def get_production_status(node_id: str, request: Request):
         return await _execute_with_audit(
@@ -176,6 +193,162 @@ def create_app(
             req_params=payload.model_dump(),
         )
 
+    @app.post("/api/v1/{node_id}/production/line_state")
+    async def set_production_line_state(
+        node_id: str,
+        request: Request,
+        payload: LineStateRequest = Body(...),
+    ):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="set_line_state",
+            req_params=payload.model_dump(),
+        )
+
+    # Node N2: Environmental Monitoring
+    @app.get("/api/v1/{node_id}/environment/status")
+    async def get_environment_status(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_status",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/environment/temperature")
+    async def get_environment_temperature(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_temperature",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/environment/humidity")
+    async def get_environment_humidity(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_humidity",
+            req_params={},
+        )
+
+    # Node N3: Warehouse & Material Handling
+    @app.get("/api/v1/{node_id}/warehouse/status")
+    async def get_warehouse_status(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_status",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/warehouse/rfid")
+    async def get_warehouse_rfid(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="read_rfid",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/warehouse/inventory")
+    async def get_warehouse_inventory(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_inventory",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/warehouse/distance")
+    async def get_warehouse_distance(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_distance",
+            req_params={},
+        )
+
+    @app.post("/api/v1/{node_id}/warehouse/gate")
+    async def set_warehouse_gate(
+        node_id: str,
+        request: Request,
+        payload: GateControlRequest = Body(...),
+    ):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="set_gate",
+            req_params=payload.model_dump(),
+        )
+
+    # Node N4: Machine Health & Safety
+    @app.get("/api/v1/{node_id}/maintenance/status")
+    async def get_maintenance_status(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_status",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/maintenance/vibration")
+    async def get_maintenance_vibration(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_vibration",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/maintenance/health")
+    async def get_maintenance_health(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_machine_health",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/safety/status")
+    async def get_safety_status(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_status",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/safety/emergency")
+    async def get_safety_emergency_state(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_emergency_state",
+            req_params={},
+        )
+
+    @app.get("/api/v1/{node_id}/safety/check")
+    async def get_safety_operation_check(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="check_operation",
+            req_params={},
+        )
+
+    # Generic execution & status endpoints
+    @app.get("/api/v1/{node_id}/status")
+    async def get_node_generic_status(node_id: str, request: Request):
+        return await _execute_with_audit(
+            request=request,
+            node_id=node_id,
+            action="get_status",
+            req_params={},
+        )
+
     @app.post("/api/v1/{node_id}/execute")
     async def execute_generic_action(
         node_id: str,
@@ -190,8 +363,26 @@ def create_app(
         )
 
     # -------------------------------------------------------------
-    # ADMIN ENDPOINTS (Restricted to evaluator / grader)
+    # ADMIN ENDPOINTS (Restricted to evaluator / grader / fixture)
     # -------------------------------------------------------------
+
+    @app.post("/admin/nodes/{node_id}/emergency_stop")
+    async def admin_set_emergency_stop(
+        node_id: str,
+        request: Request,
+        payload: EmergencyStopAdminRequest = Body(...),
+    ):
+        """Admin physical interlock control: ONLY place where Emergency Stop can be changed."""
+        backend: Backend = request.app.state.backend
+        target_node = "n4" if node_id.lower() in ("n4", "safety", "all") else node_id.lower()
+        try:
+            updated = await backend.set_node_state(target_node, {"emergency_stop": payload.emergency_stop})
+            return {"ok": True, "data": {"node_id": target_node, "emergency_stop": payload.emergency_stop, "state": updated}, "error": None}
+        except GatewayError as exc:
+            return JSONResponse(
+                status_code=400,
+                content={"ok": False, "data": None, "error": {"code": exc.code, "message": exc.message}},
+            )
 
     @app.get("/admin/nodes/{node_id}/state")
     async def admin_get_node_state(node_id: str, request: Request):
@@ -220,6 +411,26 @@ def create_app(
                 status_code=400,
                 content={"ok": False, "data": None, "error": {"code": exc.code, "message": exc.message}},
             )
+
+    @app.post("/admin/fixtures/load")
+    async def admin_load_fixture(
+        request: Request,
+        payload: LoadFixtureRequest = Body(...),
+    ):
+        """Load an initial state fixture from arbitrary path for a specific scenario."""
+        backend: Backend = request.app.state.backend
+        faults: FaultInjector = request.app.state.fault_injector
+        fix_path = Path(payload.fixture_path)
+        if not fix_path.is_absolute():
+            fix_path = Path(__file__).parent.parent / payload.fixture_path
+        if not fix_path.exists():
+            return JSONResponse(
+                status_code=404,
+                content={"ok": False, "data": None, "error": {"code": "NOT_FOUND", "message": f"Fixture file not found: {payload.fixture_path}"}},
+            )
+        await backend.reset(fixture_path=fix_path)
+        faults.clear()
+        return {"ok": True, "data": {"loaded_fixture": str(fix_path)}, "error": None}
 
     @app.post("/admin/faults")
     async def admin_add_fault(

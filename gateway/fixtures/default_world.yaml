@@ -1,5 +1,5 @@
 # Default Hardware World Fixture for Hardware Gateway
-# Initial state for mini smart factory nodes
+# Initial state for mini smart factory nodes (N1..N4)
 
 nodes:
   n1:
@@ -14,10 +14,7 @@ nodes:
       humidity: 82.0
       pins:
         2: 0   # fan / status led
-        5: 0   # motion sensor
-        12: 0  # reading lamp
-        13: 0  # overhead light
-        14: 0  # heater
+        5: 0   # station status led / motion sensor
 
   n2:
     board: "pico_w"
@@ -32,6 +29,7 @@ nodes:
     state:
       rfid_tag: "BATCH-A100"
       rfid_valid: true
+      distance: 15.0
       gate_open: false
       inventory: 150
 
