@@ -33,17 +33,32 @@ class AuditLogger:
         duration_ms: float = 0.0,
         request_id: Optional[str] = None,
         error: Optional[Dict[str, Any]] = None,
+        decision: Optional[str] = None,
+        reason: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Record an executed command and write it to the audit log synchronously."""
         timestamp = datetime.now(timezone.utc).isoformat()
+        
+        # Determine decision and rejection reason
+        dec = decision or ("accepted" if ok else "rejected")
+        rejection_reason = reason
+        if not ok and rejection_reason is None and error:
+            if isinstance(error, dict):
+                rejection_reason = error.get("message") or str(error)
+            else:
+                rejection_reason = str(error)
+
         entry = {
             "timestamp": timestamp,
             "request_id": request_id,
             "node_id": node_id.strip().lower() if node_id else "",
-            "endpoint": endpoint,
+            "tool": action,
             "action": action,
+            "endpoint": endpoint,
             "params": params or {},
             "ok": ok,
+            "decision": dec,
+            "reason": rejection_reason,
             "duration_ms": round(duration_ms, 2),
             "response": response,
             "error": error,
@@ -64,6 +79,8 @@ class AuditLogger:
         status: str = "OK",
         latency_ms: float = 0.0,
         request_id: Optional[str] = None,
+        decision: Optional[str] = None,
+        reason: Optional[str] = None,
     ) -> Dict[str, Any]:
         """Async convenience method to log request and response."""
         ok = status == "OK"
@@ -81,6 +98,8 @@ class AuditLogger:
             duration_ms=latency_ms,
             request_id=request_id,
             error=error_val,
+            decision=decision,
+            reason=reason,
         )
 
     async def get_logs(

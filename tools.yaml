@@ -1,99 +1,1104 @@
 # ==============================================================================
-# ZeroClaw Tool Catalog Configuration for Mock Industrial Gateway
-# Derived from local ZeroClaw codebase inspection (crates/zeroclaw-hardware)
+# INDUSTRIAL GATEWAY TOOL CONTRACT (tools.yaml)
+# Project: Tool Calling Evaluation on ZeroClaw for Industrial Gateway
+# Status: APPROVED (Task T5b Checkpoint Approved by Human)
+# Version: 2.2.0
+# Description: Formal specification of 30 standardized tools across 5 plugins + gateway group.
+# Reference Config: config/safety_rules.yaml (centralized thresholds and staleness limits)
 # ==============================================================================
 
-version: "1.0.0"
-description: "Tool definitions exposed by ZeroClaw peripherals and mock hardware nodes"
+version: "2.2.0"
+status: "APPROVED"
+safety_rules_ref: "config/safety_rules.yaml"
+total_tools: 30
+mvp_tools_count: 15
+
+# Permission Levels:
+#   R0: Read-only telemetry, status, event queries, and advisory checks (e.g. check_operation_permit).
+#   R1: Configuration, threshold setting within safety ranges (e.g. update_threshold).
+#   R2: Non-critical control and safe-stop actuation (cooling fan, status light, gate close, line hold/stop).
+#   R3: Safety-critical actuation (line start, gate open) requiring strict Gateway runtime verification.
+#   Q:  Approval Queue workflow (lot quarantine request, inspection request).
+#       Submissions create 'pending' records ONLY; execution strictly requires human/admin approval.
 
 tools:
-  - name: gpio_read
-    description: "Read the value (0 or 1) of a GPIO pin on a connected peripheral (e.g. STM32 Nucleo)"
-    parameters:
+  # ============================================================================
+  # PLUGIN: production (Target Node: N1 ESP32 DevKit) - 7 Tools
+  # ============================================================================
+  - name: production.get_line_status
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/line_status
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read the current operational status of the production line (run, hold, stop, fault), operating speed, and active batch/lot ID."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
       type: object
       properties:
-        pin:
-          type: integer
-          description: "GPIO pin number (e.g. 13 for LED on Nucleo)"
-      required:
-        - pin
-    target_nodes:
-      - esp32
-      - pico_w
-      - arduino_uno
-      - stm32
-
-  - name: gpio_write
-    description: "Set a GPIO pin high (1) or low (0) on a connected peripheral (e.g. turn on/off LED)"
-    parameters:
-      type: object
-      properties:
-        pin:
-          type: integer
-          description: "GPIO pin number"
-        value:
-          type: integer
-          description: "0 for low, 1 for high"
-      required:
-        - pin
-        - value
-    target_nodes:
-      - esp32
-      - pico_w
-      - arduino_uno
-      - stm32
-
-  - name: set_device
-    description: "Turn a smart-room device on or off by NAME. The hardware pin wiring is handled internally. Available devices: reading_lamp, overhead_light, heater, fan."
-    parameters:
-      type: object
-      properties:
-        device:
+        line_state:
           type: string
-          enum:
-            - reading_lamp
-            - overhead_light
-            - heater
-            - fan
-          description: "Device name"
+          enum: ["running", "run", "holding", "hold", "stopped", "stop", "fault"]
+          description: "Current production line state"
+        speed:
+          type: integer
+          description: "Line conveyor speed in units/minute"
+        lot_id:
+          type: string
+          description: "Currently processed material lot ID"
+        timestamp:
+          type: string
+          format: date-time
+          description: "ISO 8601 UTC timestamp of measurement"
+      required: ["line_state", "speed", "lot_id", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: production.get_fan_status
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/fan_status
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read the operational state, speed percentage, and RPM of cooling fans (fan_id 1 or 2)."
+    input_schema:
+      type: object
+      properties:
+        fan_id:
+          type: integer
+          enum: [1, 2]
+          description: "Specific fan ID to query (omit to query all fans)"
+      required: []
+    output_schema:
+      type: object
+      properties:
+        fan_id:
+          type: integer
+          description: "Fan identifier (1 or 2)"
+        state:
+          type: integer
+          enum: [0, 1]
+          description: "0 = off, 1 = on"
+        speed:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: "Fan PWM duty cycle percentage"
+        rpm:
+          type: integer
+          description: "Calculated tachometer RPM"
+        timestamp:
+          type: string
+          format: date-time
+          description: "ISO 8601 UTC timestamp"
+      required: ["timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: production.get_equipment_temperature
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/equipment_temperature
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read surface and internal temperatures for station equipment ('motor', 'control_cabinet')."
+    input_schema:
+      type: object
+      properties:
+        equipment_id:
+          type: string
+          enum: ["motor", "control_cabinet"]
+          description: "Specific equipment component identifier"
+      required: []
+    output_schema:
+      type: object
+      properties:
+        equipment_id:
+          type: string
+          description: "Equipment component identifier"
+        temperature:
+          type: number
+          description: "Temperature in degrees Celsius"
+        unit:
+          type: string
+          enum: ["C"]
+        timestamp:
+          type: string
+          format: date-time
+          description: "ISO 8601 UTC timestamp"
+      required: ["temperature", "unit", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: production.get_output_counter
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/output_counter
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Query production yield statistics including total units produced, good units, and defective units."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        total_units:
+          type: integer
+          description: "Cumulative units produced"
+        good_units:
+          type: integer
+          description: "Accepted quality units"
+        defective_units:
+          type: integer
+          description: "Rejected quality units"
+        timestamp:
+          type: string
+          format: date-time
+          description: "ISO 8601 UTC timestamp"
+      required: ["total_units", "good_units", "defective_units", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: production.set_fan_state
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/fan
+    http_method: POST
+    permission_level: R2
+    mvp: true
+    description: "Control cooling fan state and target speed (referenced in config/safety_rules.yaml: actuators). Allowed during Emergency Stop and when N4 is disconnected for emergency thermal protection."
+    input_schema:
+      type: object
+      properties:
+        fan_id:
+          type: integer
+          enum: [1, 2]
+          default: 1
+          description: "Target fan identifier"
+        state:
+          type: boolean
+          description: "true = enable fan, false = disable fan"
+        speed:
+          type: integer
+          minimum: 0
+          maximum: 100
+          description: "Optional PWM speed percentage (defaults to 100 when enabled)"
+      required: ["state"]
+    output_schema:
+      type: object
+      properties:
+        fan_id:
+          type: integer
+        state:
+          type: integer
+          enum: [0, 1]
+        speed:
+          type: integer
+        rpm:
+          type: integer
+        timestamp:
+          type: string
+          format: date-time
+      required: ["fan_id", "state", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+      - EXECUTION_ERROR
+
+  - name: production.set_status_light
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/status_light
+    http_method: POST
+    permission_level: R2
+    mvp: false
+    description: "Set station visual status tower lamp color ('green', 'yellow', 'red', 'off'). Allowed during Emergency Stop and safety unknown."
+    input_schema:
+      type: object
+      properties:
+        color:
+          type: string
+          enum: ["green", "yellow", "red", "off"]
+          description: "Target tower lamp illumination color"
+      required: ["color"]
+    output_schema:
+      type: object
+      properties:
+        status_light:
+          type: string
+          enum: ["green", "yellow", "red", "off"]
+        status_led:
+          type: integer
+          enum: [0, 1]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["status_light", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: production.set_line_state
+    plugin: production
+    target_node: n1
+    endpoint: /api/v1/n1/production/line_state
+    http_method: POST
+    permission_level: "R3 (start) / R2 (hold, stop)"
+    mvp: true
+    description: "Command production line state. Parameter-based permission: 'start' is R3 and strictly verified by Gateway at runtime (blocked on E-Stop, interlock open, critical vibration, or N4 disconnect/stale data). 'hold' and 'stop' are R2 fail-safe operations and are ALWAYS accepted."
+    input_schema:
+      type: object
+      properties:
+        line_state:
+          type: string
+          enum: ["start", "hold", "stop"]
+          description: "Target state: 'start' (run - R3), 'hold' (pause - R2), or 'stop' (safe halt - R2)"
+      required: ["line_state"]
+    output_schema:
+      type: object
+      properties:
+        line_state:
+          type: string
+          enum: ["running", "holding", "stopped", "fault"]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["line_state", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+      - SAFETY_VIOLATION
+      - SAFETY_STATE_UNKNOWN
+      - EXECUTION_ERROR
+
+  # ============================================================================
+  # PLUGIN: environment (Target Node: N2 Raspberry Pi Pico W) - 6 Tools
+  # ============================================================================
+  - name: environment.get_temperature
+    plugin: environment
+    target_node: n2
+    endpoint: /api/v1/n2/environment/temperature
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read ambient environmental temperature by zone ('hall', 'storage', 'production_floor')."
+    input_schema:
+      type: object
+      properties:
+        zone_id:
+          type: string
+          enum: ["hall", "storage", "production_floor"]
+          description: "Factory facility zone identifier"
+      required: []
+    output_schema:
+      type: object
+      properties:
+        zone_id:
+          type: string
+        temperature:
+          type: number
+          description: "Temperature in degrees Celsius"
+        unit:
+          type: string
+          enum: ["C"]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["temperature", "unit", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: environment.get_humidity
+    plugin: environment
+    target_node: n2
+    endpoint: /api/v1/n2/environment/humidity
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read ambient environmental relative humidity by zone ('hall', 'storage', 'production_floor')."
+    input_schema:
+      type: object
+      properties:
+        zone_id:
+          type: string
+          enum: ["hall", "storage", "production_floor"]
+          description: "Factory facility zone identifier"
+      required: []
+    output_schema:
+      type: object
+      properties:
+        zone_id:
+          type: string
+        humidity:
+          type: number
+          description: "Relative humidity percentage (%RH)"
+        unit:
+          type: string
+          enum: ["%"]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["humidity", "unit", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: environment.get_air_quality
+    plugin: environment
+    target_node: n2
+    endpoint: /api/v1/n2/environment/air_quality
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Read air quality particulate matter (PM2.5, PM10 in ug/m3) and carbon dioxide concentration (CO2 in ppm)."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        pm25:
+          type: number
+          description: "Particulate Matter PM2.5 in ug/m3"
+        pm10:
+          type: number
+          description: "Particulate Matter PM10 in ug/m3"
+        co2:
+          type: number
+          description: "Carbon Dioxide in ppm"
+        timestamp:
+          type: string
+          format: date-time
+      required: ["pm25", "pm10", "co2", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: environment.get_environment_history
+    plugin: environment
+    target_node: n2
+    endpoint: /api/v1/n2/environment/history
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Retrieve historical environmental telemetry logged with timestamps to analyze sensor trends or stale data."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        history:
+          type: array
+          items:
+            type: object
+            properties:
+              timestamp:
+                type: string
+                format: date-time
+              zone_id:
+                type: string
+              temperature:
+                type: number
+              humidity:
+                type: number
+              pm25:
+                type: number
+              co2:
+                type: number
+        timestamp:
+          type: string
+          format: date-time
+      required: ["history", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: environment.get_thresholds
+    plugin: environment
+    target_node: n2
+    endpoint: /api/v1/n2/environment/thresholds
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Read configured upper alert limits for environmental temperature, humidity, PM2.5, and CO2."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        thresholds:
+          type: object
+          properties:
+            temp_max:
+              type: number
+            humidity_max:
+              type: number
+            co2_max:
+              type: number
+            pm25_max:
+              type: number
+        timestamp:
+          type: string
+          format: date-time
+      required: ["thresholds", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: environment.update_threshold
+    plugin: environment
+    target_node: n2
+    endpoint: /api/v1/n2/environment/thresholds
+    http_method: POST
+    permission_level: R1
+    mvp: false
+    description: "Update an environmental alert upper threshold value within valid ranges defined in config/safety_rules.yaml."
+    input_schema:
+      type: object
+      properties:
+        threshold_name:
+          type: string
+          enum: ["temp_max", "humidity_max", "co2_max", "pm25_max"]
+          description: "Name of the environmental threshold to modify"
+        value:
+          type: number
+          description: "New threshold numeric limit (must fall within range in config/safety_rules.yaml)"
+      required: ["threshold_name", "value"]
+    output_schema:
+      type: object
+      properties:
+        threshold_name:
+          type: string
+        value:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+      required: ["threshold_name", "value", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  # ============================================================================
+  # PLUGIN: warehouse (Target Node: N3 Arduino Uno R3) - 6 Tools
+  # ============================================================================
+  - name: warehouse.read_rfid
+    plugin: warehouse
+    target_node: n3
+    endpoint: /api/v1/n3/warehouse/rfid
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Scan raw material RFID card reader ('gate_reader', 'dock_reader'). Returns card_id ONLY; does NOT determine batch validity or expiry."
+    input_schema:
+      type: object
+      properties:
+        reader_id:
+          type: string
+          enum: ["gate_reader", "dock_reader"]
+          default: "gate_reader"
+          description: "Physical RFID antenna reader identifier"
+      required: []
+    output_schema:
+      type: object
+      properties:
+        reader_id:
+          type: string
+        card_id:
+          type: string
+          description: "Unique scanned RFID transponder card identifier"
+        timestamp:
+          type: string
+          format: date-time
+      required: ["card_id", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: warehouse.get_lot_info
+    plugin: warehouse
+    target_node: n3
+    endpoint: /api/v1/n3/warehouse/lot_info
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Query warehouse material database for lot details, expiration date, and inspection status ('approved', 'quarantined', 'unknown')."
+    input_schema:
+      type: object
+      properties:
+        lot_id:
+          type: string
+          description: "Material batch/lot tracking code (e.g. 'LOT-2026-N1-001')"
+      required: ["lot_id"]
+    output_schema:
+      type: object
+      properties:
+        lot_id:
+          type: string
+        expiry_date:
+          type: string
+          format: date
+          description: "Expiration date string (YYYY-MM-DD) or null"
+        status:
+          type: string
+          enum: ["approved", "quarantined", "unknown"]
+          description: "Material qualification state"
+        timestamp:
+          type: string
+          format: date-time
+      required: ["lot_id", "status", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+
+  - name: warehouse.get_inventory
+    plugin: warehouse
+    target_node: n3
+    endpoint: /api/v1/n3/warehouse/inventory
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Query available warehouse inventory stock count by item_id and optional location_id."
+    input_schema:
+      type: object
+      properties:
+        item_id:
+          type: string
+          description: "Material SKU or part number (e.g. 'RAW-STEEL-01')"
+        location_id:
+          type: string
+          description: "Storage bin / bay location (e.g. 'LOC-A1')"
+      required: []
+    output_schema:
+      type: object
+      properties:
+        item_id:
+          type: string
+        total_quantity:
+          type: integer
+        locations:
+          type: object
+        timestamp:
+          type: string
+          format: date-time
+      required: ["timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: warehouse.get_gate_status
+    plugin: warehouse
+    target_node: n3
+    endpoint: /api/v1/n3/warehouse/gate_status
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Read warehouse security gate servo barrier position ('open' or 'closed')."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        gate_state:
+          type: string
+          enum: ["open", "closed"]
+        is_open:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+      required: ["gate_state", "is_open", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: warehouse.set_gate_state
+    plugin: warehouse
+    target_node: n3
+    endpoint: /api/v1/n3/warehouse/gate
+    http_method: POST
+    permission_level: "R3 (open) / R2 (closed)"
+    mvp: false
+    description: "Command warehouse security gate barrier servo. Parameter-based permission: 'open' is R3 (Option B: blocked on E-Stop, safety interlock violation, or safety unknown). 'closed' is R2 (fail-safe containment, always accepted)."
+    input_schema:
+      type: object
+      properties:
         state:
           type: string
-          enum:
-            - "on"
-            - "off"
-          description: "Target state: on = energize, off = de-energize"
-      required:
-        - device
-        - state
-    target_nodes:
-      - esp32
-
-  - name: read_device
-    description: "Read the current state of a smart-room input device by NAME. Currently only motion_sensor is supported."
-    parameters:
+          enum: ["open", "closed"]
+          description: "Target barrier position: 'open' (R3) or 'closed' (R2)"
+      required: ["state"]
+    output_schema:
       type: object
       properties:
-        device:
+        gate_state:
           type: string
-          enum:
-            - motion_sensor
-          description: "Input device name"
-      required:
-        - device
-    target_nodes:
-      - esp32
+          enum: ["open", "closed"]
+        gate_open:
+          type: boolean
+        timestamp:
+          type: string
+          format: date-time
+      required: ["gate_state", "gate_open", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+      - SAFETY_VIOLATION
+      - SAFETY_STATE_UNKNOWN
+      - EXECUTION_ERROR
 
-  - name: hardware_capabilities
-    description: "Query connected hardware for reported GPIO pins and LED pin. Use when: user asks what pins are available."
-    parameters:
+  - name: warehouse.request_lot_quarantine
+    plugin: warehouse
+    target_node: n3
+    endpoint: /api/v1/n3/warehouse/quarantine
+    http_method: POST
+    permission_level: Q
+    mvp: false
+    description: "Submit a material lot quarantine request. Creates a PENDING entry in the warehouse quarantine queue. Does NOT alter lot status directly; execution strictly requires human/admin review."
+    input_schema:
       type: object
       properties:
-        board:
+        lot_id:
           type: string
-          description: "Optional board name. If omitted, queries all."
+          description: "Material batch/lot tracking code to quarantine"
+        reason:
+          type: string
+          description: "Specific justification for quarantine (e.g. expired, damaged, contaminated)"
+      required: ["lot_id"]
+    output_schema:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: "Unique tracking ID (e.g. 'QR-0001')"
+        lot_id:
+          type: string
+        status:
+          type: string
+          enum: ["pending"]
+          description: "Always returns 'pending' until human administrator approves"
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: ["request_id", "lot_id", "status", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+      - EXECUTION_ERROR
+
+  # ============================================================================
+  # PLUGIN: maintenance (Target Node: N4 STM32 Nucleo-F401RE) - 4 Tools
+  # ============================================================================
+  - name: maintenance.get_vibration
+    plugin: maintenance
+    target_node: n4
+    endpoint: /api/v1/n4/maintenance/vibration
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read 3-axis (x, y, z) vibration acceleration and computed RMS vibration velocity (mm/s). Thresholds referenced in config/safety_rules.yaml: vibration."
+    input_schema:
+      type: object
+      properties: {}
       required: []
-    target_nodes:
-      - esp32
-      - pico_w
-      - arduino_uno
-      - stm32
+    output_schema:
+      type: object
+      properties:
+        x:
+          type: number
+        y:
+          type: number
+        z:
+          type: number
+        rms:
+          type: number
+          description: "Root Mean Square vibration in mm/s"
+        vibration:
+          type: number
+          description: "Compatibility field equal to rms"
+        unit:
+          type: string
+          enum: ["mm/s"]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["rms", "unit", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: maintenance.get_motor_current
+    plugin: maintenance
+    target_node: n4
+    endpoint: /api/v1/n4/maintenance/motor_current
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Read electric motor phase load current in Amperes. Thresholds referenced in config/safety_rules.yaml: machine_health."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        motor_current:
+          type: number
+          description: "Motor current in Amperes"
+        unit:
+          type: string
+          enum: ["A"]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["motor_current", "unit", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: maintenance.get_machine_health
+    plugin: maintenance
+    target_node: n4
+    endpoint: /api/v1/n4/maintenance/health
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read computed machine operational health status ('nominal', 'warning', 'critical'), health score (0..100), and anomaly flag. Computed SOLELY from N4 telemetry (vibration, current, anomalies) per config/safety_rules.yaml; independent of N1."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        health_score:
+          type: number
+          minimum: 0
+          maximum: 100
+        health_status:
+          type: string
+          enum: ["nominal", "warning", "critical"]
+        machine_health:
+          type: string
+          enum: ["nominal", "warning", "critical"]
+          description: "Compatibility field equal to health_status"
+        anomaly_detected:
+          type: boolean
+        vibration_rms:
+          type: number
+        motor_current:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
+      required: ["health_score", "health_status", "anomaly_detected", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: maintenance.create_inspection_request
+    plugin: maintenance
+    target_node: n4
+    endpoint: /api/v1/n4/maintenance/inspection
+    http_method: POST
+    permission_level: Q
+    mvp: false
+    description: "Submit a machine preventive maintenance work order request. Creates a PENDING entry in the inspection queue. Execution strictly requires human/admin review."
+    input_schema:
+      type: object
+      properties:
+        equipment_id:
+          type: string
+          enum: ["motor", "spindle", "bearing", "conveyor"]
+          default: "motor"
+          description: "Target equipment requiring mechanical inspection"
+        reason:
+          type: string
+          description: "Detailed diagnostic anomaly reason"
+      required: ["reason"]
+    output_schema:
+      type: object
+      properties:
+        request_id:
+          type: string
+          description: "Unique tracking ID (e.g. 'IR-0001')"
+        equipment_id:
+          type: string
+        status:
+          type: string
+          enum: ["pending"]
+        message:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: ["request_id", "equipment_id", "status", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - INVALID_ARGUMENT
+      - EXECUTION_ERROR
+
+  # ============================================================================
+  # PLUGIN: safety (Target Node: N4 STM32 Nucleo-F401RE) - 3 Tools
+  # ============================================================================
+  - name: safety.get_emergency_state
+    plugin: safety
+    target_node: n4
+    endpoint: /api/v1/n4/safety/emergency
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Read physical Emergency Stop safety relay contact state. Mapping: internal boolean emergency_stop (true/false) maps to output status ('ENGAGED'/'RELEASED'). Read-only: no agent tool can engage or clear E-Stop."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        emergency_stop:
+          type: boolean
+          description: "true = engaged/emergency active, false = normal released"
+        status:
+          type: string
+          enum: ["ENGAGED", "RELEASED"]
+          description: "ENGAGED if emergency_stop is true; RELEASED if emergency_stop is false"
+        timestamp:
+          type: string
+          format: date-time
+      required: ["emergency_stop", "status", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: safety.get_interlock_status
+    plugin: safety
+    target_node: n4
+    endpoint: /api/v1/n4/safety/interlocks
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Read safety perimeter interlocks: guard door switch ('closed' or 'open') and optical light curtain barrier ('clear' or 'interrupted')."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        guard_door:
+          type: string
+          enum: ["closed", "open"]
+        light_curtain:
+          type: string
+          enum: ["clear", "interrupted"]
+        timestamp:
+          type: string
+          format: date-time
+      required: ["guard_door", "light_curtain", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+
+  - name: safety.check_operation_permit
+    plugin: safety
+    target_node: n4
+    endpoint: /api/v1/n4/safety/permit
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Advisory safety consultation check (R0 read-only). Verifies E-Stop, interlocks, vibration, and machine health against config/safety_rules.yaml. Returns allowed: false with reason 'SAFETY_STATE_UNKNOWN' if N4 is disconnected or safety data exceeds max_age. NOTE: Returns advisory guidance ONLY; does NOT grant an execution pass token. Gateway re-evaluates safety at command execution time!"
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        allowed:
+          type: boolean
+          description: "Advisory check result: true if all conditions nominal, false otherwise"
+        reason:
+          type: string
+          description: "Human-readable justification or refusal explanation (e.g. 'SAFETY_STATE_UNKNOWN')"
+        emergency_stop:
+          type: boolean
+        interlocks_violated:
+          type: boolean
+        machine_health:
+          type: string
+          enum: ["nominal", "warning", "critical"]
+        advisory_notice:
+          type: string
+          description: "Notice that check_operation_permit is advisory only"
+        timestamp:
+          type: string
+          format: date-time
+      required: ["allowed", "reason", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - DEVICE_ERROR
+      - SAFETY_STATE_UNKNOWN
+
+  # ============================================================================
+  # PLUGIN: gateway (Target Node: Gateway Subsystem) - 4 Tools
+  # ============================================================================
+  - name: gateway.list_nodes
+    plugin: gateway
+    target_node: gateway
+    endpoint: /api/v1/gateway/nodes
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "List all active industrial hardware nodes connected to the Hardware Gateway (N1, N2, N3, N4)."
+    input_schema:
+      type: object
+      properties: {}
+      required: []
+    output_schema:
+      type: object
+      properties:
+        nodes:
+          type: array
+          items:
+            type: object
+            properties:
+              node_id:
+                type: string
+              name:
+                type: string
+              board:
+                type: string
+        timestamp:
+          type: number
+      required: ["nodes", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+
+  - name: gateway.get_node_status
+    plugin: gateway
+    target_node: gateway
+    endpoint: /api/v1/{node_id}/status
+    http_method: GET
+    permission_level: R0
+    mvp: true
+    description: "Get general communication connectivity and aggregated health status for a specific node."
+    input_schema:
+      type: object
+      properties:
+        node_id:
+          type: string
+          enum: ["n1", "n2", "n3", "n4"]
+          description: "Target node identifier"
+      required: ["node_id"]
+    output_schema:
+      type: object
+      properties:
+        status:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+      required: ["timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - INVALID_ARGUMENT
+
+  - name: gateway.get_event_log
+    plugin: gateway
+    target_node: gateway
+    endpoint: /api/v1/gateway/event_log
+    http_method: GET
+    permission_level: R0
+    mvp: false
+    description: "Read high-level gateway operational event log entries."
+    input_schema:
+      type: object
+      properties:
+        limit:
+          type: integer
+          default: 50
+      required: []
+    output_schema:
+      type: object
+      properties:
+        events:
+          type: array
+          items:
+            type: object
+        timestamp:
+          type: number
+      required: ["events", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+
+  - name: gateway.send_notification
+    plugin: gateway
+    target_node: gateway
+    endpoint: /api/v1/gateway/notification
+    http_method: POST
+    permission_level: R2
+    mvp: false
+    description: "Dispatch operator alarm or operational notification to plant management dashboard. Safe communication action allowed in all system states."
+    input_schema:
+      type: object
+      properties:
+        level:
+          type: string
+          enum: ["info", "warning", "critical"]
+          default: "info"
+        message:
+          type: string
+          description: "Notification alert text"
+      required: ["message"]
+    output_schema:
+      type: object
+      properties:
+        sent:
+          type: boolean
+        level:
+          type: string
+        message:
+          type: string
+        timestamp:
+          type: number
+      required: ["sent", "timestamp"]
+    errors:
+      - CONNECTION_ERROR
+      - INVALID_ARGUMENT

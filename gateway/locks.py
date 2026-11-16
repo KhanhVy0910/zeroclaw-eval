@@ -22,6 +22,9 @@ class NodeLockManager:
     def get_lock(self, node_id: str) -> asyncio.Lock:
         """Get or create the asyncio.Lock bound to a specific node_id."""
         normalized = node_id.strip().lower()
+        # N4 sequential lock is shared by both maintenance and safety subsystems
+        if normalized in ("maintenance", "safety"):
+            normalized = "n4"
         if normalized not in self._locks:
             self._locks[normalized] = asyncio.Lock()
         return self._locks[normalized]

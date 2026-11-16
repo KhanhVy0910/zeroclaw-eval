@@ -6,20 +6,69 @@ nodes:
     board: "esp32"
     name: "Production Control"
     state:
+      line_state: "running"
+      speed: 100
+      lot_id: "LOT-2026-N1-001"
+      fans:
+        "1":
+          fan_id: 1
+          state: 0
+          speed: 0
+          rpm: 0
+        "2":
+          fan_id: 2
+          state: 0
+          speed: 0
+          rpm: 0
+      status_light: "green"
+      equipment_temperature:
+        motor: 45.2
+        control_cabinet: 36.8
+      output_counter:
+        total_units: 1520
+        good_units: 1498
+        defective_units: 22
+      # Backwards compatibility fields
       fan: 0
       status_led: 0
-      line_state: "running"
       machine_status: "ok"
       temperature: 45.2
       humidity: 82.0
       pins:
-        2: 0   # fan / status led
-        5: 0   # station status led / motion sensor
+        2: 0
+        5: 0
 
   n2:
     board: "pico_w"
     name: "Environmental Monitoring"
     state:
+      zones:
+        hall:
+          temperature: 23.5
+          humidity: 55.0
+        storage:
+          temperature: 20.2
+          humidity: 50.0
+        production_floor:
+          temperature: 25.8
+          humidity: 62.0
+      air_quality:
+        pm25: 18.5
+        pm10: 32.0
+        co2: 520.0
+      thresholds:
+        temp_max: 35.0
+        humidity_max: 75.0
+        co2_max: 1000.0
+        pm25_max: 50.0
+      measurement_history:
+        - timestamp: "2026-11-16T12:00:00Z"
+          zone_id: "production_floor"
+          temperature: 25.5
+          humidity: 61.5
+          pm25: 18.0
+          co2: 510.0
+      # Backwards compatibility fields
       temperature: 24.5
       humidity: 60.0
 
@@ -27,16 +76,60 @@ nodes:
     board: "arduino_uno"
     name: "Warehouse & Material Handling"
     state:
+      rfid_readers:
+        gate_reader:
+          card_id: "BATCH-A100"
+        dock_reader:
+          card_id: "CARD-D200"
+      lots:
+        LOT-2026-N1-001:
+          lot_id: "LOT-2026-N1-001"
+          expiry_date: "2027-12-31"
+          status: "approved"
+        LOT-2026-OLD-002:
+          lot_id: "LOT-2026-OLD-002"
+          expiry_date: "2026-01-01"
+          status: "quarantined"
+        LOT-UNKNOWN-003:
+          lot_id: "LOT-UNKNOWN-003"
+          expiry_date: "2028-06-30"
+          status: "unknown"
+      inventory:
+        RAW-STEEL-01:
+          LOC-A1: 150
+          LOC-A2: 50
+        BOLT-M8:
+          LOC-B1: 1200
+      gate:
+        state: "closed"
+        is_open: false
+      quarantine_queue: []
+      # Backwards compatibility fields
       rfid_tag: "BATCH-A100"
       rfid_valid: true
       distance: 15.0
       gate_open: false
-      inventory: 150
+      inventory_count: 150
 
   n4:
     board: "stm32"
     name: "Machine Health & Safety"
     state:
-      vibration: 0.12
-      machine_health: "nominal"
+      vibration:
+        x: 0.08
+        y: 0.09
+        z: 0.06
+        rms: 0.12
+      motor_current: 8.4
       emergency_stop: false
+      interlocks:
+        guard_door: "closed"
+        light_curtain: "clear"
+      anomaly_history: []
+      inspection_queue: []
+      health_score: 95.0
+      health_status: "nominal"
+      anomaly_detected: false
+      # Backwards compatibility fields
+      vibration_rms: 0.13
+      machine_health: "nominal"

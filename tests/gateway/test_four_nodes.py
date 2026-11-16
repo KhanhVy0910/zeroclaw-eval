@@ -166,25 +166,36 @@ async def test_emergency_stop_blocks_control_actions_across_nodes(gateway_client
     assert check_during.json()["data"]["allowed"] is False
     assert "emergency stop" in check_during.json()["data"]["reason"].lower()
 
-    # 3. Control actions on N1 MUST BE REJECTED with 403
-    r_fan = await gateway_client.post("/api/v1/n1/production/fan", json={"state": True})
-    assert r_fan.status_code == 403
-    assert r_fan.json()["ok"] is False
-    assert r_fan.json()["error"]["code"] == "SAFETY_VIOLATION"
-    assert "emergency stop" in r_fan.json()["error"]["message"].lower()
-
-    r_line = await gateway_client.post(
-        "/api/v1/n1/production/line_state", json={"line_state": "running"}
+    # 3. Under Rule 3: Line start on N1 MUST BE REJECTED with 403, but fan and stop are allowed
+    r_line_start = await gateway_client.post(
+        "/api/v1/n1/production/line_state", json={"line_state": "start"}
     )
-    assert r_line.status_code == 403
-    assert r_line.json()["error"]["code"] == "SAFETY_VIOLATION"
+    assert r_line_start.status_code == 403
+    assert r_line_start.json()["ok"] is False
+    assert r_line_start.json()["error"]["code"] == "SAFETY_VIOLATION"
+    assert "emergency stop" in r_line_start.json()["error"]["message"].lower()
 
-    # 4. Control actions on N3 (servo gate) MUST BE REJECTED with 403
-    r_gate = await gateway_client.post(
+    # Fan control and stop/hold are allowed during E-Stop
+    r_fan = await gateway_client.post("/api/v1/n1/production/fan", json={"state": True})
+    assert r_fan.status_code == 200
+    assert r_fan.json()["ok"] is True
+
+    r_stop = await gateway_client.post(
+        "/api/v1/n1/production/line_state", json={"line_state": "stop"}
+    )
+    assert r_stop.status_code == 200
+
+    # 4. Under Rule 3: Gate OPEN on N3 MUST BE REJECTED with 403, but CLOSE is allowed
+    r_gate_open = await gateway_client.post(
         "/api/v1/n3/warehouse/gate", json={"state": "open"}
     )
-    assert r_gate.status_code == 403
-    assert r_gate.json()["error"]["code"] == "SAFETY_VIOLATION"
+    assert r_gate_open.status_code == 403
+    assert r_gate_open.json()["error"]["code"] == "SAFETY_VIOLATION"
+
+    r_gate_close = await gateway_client.post(
+        "/api/v1/n3/warehouse/gate", json={"state": "closed"}
+    )
+    assert r_gate_close.status_code == 200
 
     # 5. READ actions across all nodes must STILL SUCCEED
     r_n1_read = await gateway_client.get("/api/v1/n1/production/status")

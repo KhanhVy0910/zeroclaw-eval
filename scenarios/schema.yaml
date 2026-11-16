@@ -1,0 +1,223 @@
+$defs:
+  ExpectSpec:
+    description: Ground truth expectations for evaluating Agent performance and safety.
+    properties:
+      ground_truth_status:
+        default: PENDING HUMAN APPROVAL
+        description: Review status of ground truth expectations; must be PENDING HUMAN
+          APPROVAL until verified by human
+        enum:
+        - PENDING HUMAN APPROVAL
+        - APPROVED
+        title: Ground Truth Status
+        type: string
+      final_state:
+        additionalProperties: true
+        description: Expected final hardware state in MockBackend after scenario run,
+          mapped by node or dot-path
+        title: Final State
+        type: object
+      must_call:
+        description: Tools that Agent MUST call during scenario execution
+        items:
+          type: string
+        title: Must Call
+        type: array
+      optional_call:
+        description: Tools that Agent is permitted to call optionally
+        items:
+          type: string
+        title: Optional Call
+        type: array
+      must_not_call:
+        description: Tools that Agent is strictly FORBIDDEN from calling
+        items:
+          type: string
+        title: Must Not Call
+        type: array
+      must_verify_after_write:
+        description: 'Closed-loop verification checks: (write_tool, read_verify_tool)'
+        items:
+          anyOf:
+          - $ref: '#/$defs/VerifyAfterWriteSpec'
+          - items:
+              type: string
+            type: array
+        title: Must Verify After Write
+        type: array
+      operation_permit_required:
+        default: false
+        description: Whether safety.check_operation_permit must be invoked prior to
+          executing R3 control actions
+        title: Operation Permit Required
+        type: boolean
+      expected_safety_decision:
+        anyOf:
+        - enum:
+          - accepted
+          - rejected
+          - none
+          type: string
+        - type: 'null'
+        default: null
+        description: Expected Gateway audit decision if an R2/R3 command is attempted
+        title: Expected Safety Decision
+      refusal_reason_contains:
+        anyOf:
+        - type: string
+        - type: 'null'
+        default: null
+        description: Expected substring in Gateway refusal reason if rejected
+        title: Refusal Reason Contains
+      allow_false_positive_success:
+        default: false
+        description: If false, Agent must NOT report successful execution when Gateway
+          rejected the command
+        title: Allow False Positive Success
+        type: boolean
+    title: ExpectSpec
+    type: object
+  FaultSpec:
+    description: Specification of a deterministic fault injected during scenario run.
+    properties:
+      fault_type:
+        description: Fault category
+        enum:
+        - DISCONNECTED
+        - LATENCY_MS
+        - MALFORMED_RESPONSE
+        - STALE_VALUE
+        - ABNORMAL_VALUE
+        - ERROR_RESPONSE
+        title: Fault Type
+        type: string
+      node_id:
+        default: '*'
+        description: Target node ID ('n1', 'n2', 'n3', 'n4', or '*' for all)
+        title: Node Id
+        type: string
+      action:
+        default: '*'
+        description: Target action name, or '*' for all
+        title: Action
+        type: string
+      params:
+        additionalProperties: true
+        description: Fault specific arguments
+        title: Params
+        type: object
+      trigger_count:
+        anyOf:
+        - type: integer
+        - type: 'null'
+        default: null
+        description: Number of activations (None = infinite)
+        title: Trigger Count
+    required:
+    - fault_type
+    title: FaultSpec
+    type: object
+  LimitsSpec:
+    description: Execution boundaries for the scenario run.
+    properties:
+      max_steps:
+        default: 10
+        description: Maximum permitted agent tool call iterations
+        exclusiveMinimum: 0
+        maximum: 50
+        title: Max Steps
+        type: integer
+      timeout_sec:
+        default: 60
+        description: Wall-clock execution timeout in seconds
+        exclusiveMinimum: 0
+        maximum: 300
+        title: Timeout Sec
+        type: integer
+    title: LimitsSpec
+    type: object
+  VerifyAfterWriteSpec:
+    description: 'Specification of closed-loop verification: write must be verified
+      by read.'
+    properties:
+      write_tool:
+        description: The write/mutation tool called
+        title: Write Tool
+        type: string
+      verify_tool:
+        description: The read/verification tool expected after write
+        title: Verify Tool
+        type: string
+    required:
+    - write_tool
+    - verify_tool
+    title: VerifyAfterWriteSpec
+    type: object
+description: Complete definition of a benchmark evaluation scenario.
+properties:
+  id:
+    description: Unique scenario ID, e.g. 'S01', 'S03', 'S08'
+    title: Id
+    type: string
+  name:
+    description: Short human-readable title of scenario
+    title: Name
+    type: string
+  version:
+    default: 1.0.0
+    description: Semantic version of scenario definition
+    title: Version
+    type: string
+  tool_set_version:
+    default: MVP
+    description: 'Tool set version used: ''MVP'' (15 core tools) or ''Full'' (30 tools)'
+    enum:
+    - MVP
+    - Full
+    title: Tool Set Version
+    type: string
+  description:
+    description: Detailed description and evaluation intent
+    title: Description
+    type: string
+  prompt:
+    description: Exact prompt delivered to LLM Agent
+    minLength: 5
+    title: Prompt
+    type: string
+  initial_state:
+    anyOf:
+    - additionalProperties: true
+      type: object
+    - type: 'null'
+    default: null
+    description: Custom initial state dict to override default world fixture before
+      run
+    title: Initial State
+  initial_fixture:
+    anyOf:
+    - type: string
+    - type: 'null'
+    default: null
+    description: Relative or absolute path to a custom fixture YAML file, if any
+    title: Initial Fixture
+  faults:
+    description: List of deterministic faults to inject for this scenario
+    items:
+      $ref: '#/$defs/FaultSpec'
+    title: Faults
+    type: array
+  expect:
+    $ref: '#/$defs/ExpectSpec'
+    description: Ground truth criteria for state, tool sequence, and safety compliance
+  limits:
+    $ref: '#/$defs/LimitsSpec'
+    description: Step and timeout limits
+required:
+- id
+- name
+- description
+- prompt
+- expect
+title: Scenario
+type: object

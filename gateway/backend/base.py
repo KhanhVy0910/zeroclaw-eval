@@ -51,6 +51,13 @@ class GatewaySafetyViolationError(GatewayError):
         super().__init__(message, code="SAFETY_VIOLATION")
 
 
+class GatewaySafetyStateUnknownError(GatewayError):
+    """Raised when safety conditions cannot be verified (e.g. N4 disconnected or safety data is stale)."""
+
+    def __init__(self, message: str = "Safety conditions cannot be verified"):
+        super().__init__(message, code="SAFETY_STATE_UNKNOWN")
+
+
 class Backend(ABC):
     """Abstract interface for hardware access backends (Mock, Serial, etc.)."""
 

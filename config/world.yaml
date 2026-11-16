@@ -1,7 +1,7 @@
 # Hardware Gateway World Configuration (4 Industrial Nodes)
 # All nodes and channels are simulated for ZeroClaw Evaluation.
 
-schema_version: "2.0"
+schema_version: "2.1"
 simulated_environment: true
 
 nodes:
@@ -12,29 +12,57 @@ nodes:
     channel: "simulated_http://127.0.0.1:8000/api/v1/n1"
     simulated: true
     permissions:
-      read: true
-      write: true
+      R0_read: true
+      R1_config: false
+      R2_control: true
+      R3_critical: true
     devices:
-      - name: "fan"
+      - name: "fans"
+        type: "actuator_group"
+        description: "Cooling fans (fan_id 1 and 2: state, speed, rpm)"
+        channel: "gpio_pwm_fans"
+      - name: "status_light"
         type: "actuator"
-        description: "Cooling fan (0=off, 1=on)"
-        channel: "gpio_pin_2"
-      - name: "status_led"
-        type: "actuator"
-        description: "Station status LED (0=off, 1=on)"
-        channel: "gpio_pin_5"
+        description: "Station status light (green, yellow, red)"
+        channel: "gpio_rgb_led"
       - name: "line_state"
         type: "actuator_state"
-        description: "Production line operating state ('running' or 'holding')"
+        description: "Production line operating state ('run', 'hold', 'stop', 'fault')"
         channel: "internal_state"
-      - name: "machine_status"
-        type: "sensor"
-        description: "Machine health status ('ok' or 'fault')"
-        channel: "internal_state"
+      - name: "equipment_temperature"
+        type: "sensor_group"
+        description: "Equipment temperatures by equipment_id ('motor', 'control_cabinet')"
+        channel: "i2c_temp_sensors"
+      - name: "output_counter"
+        type: "sensor_state"
+        description: "Production output counters (total_units, good_units, defective_units)"
+        channel: "internal_counter"
     initial_state:
+      line_state: "run"
+      speed: 100
+      lot_id: "LOT-2026-N1-001"
+      fans:
+        "1":
+          fan_id: 1
+          state: 0
+          speed: 0
+          rpm: 0
+        "2":
+          fan_id: 2
+          state: 0
+          speed: 0
+          rpm: 0
+      status_light: "green"
+      equipment_temperature:
+        motor: 45.2
+        control_cabinet: 36.8
+      output_counter:
+        total_units: 1520
+        good_units: 1498
+        defective_units: 22
+      # Backwards compatibility fields
       fan: 0
       status_led: 0
-      line_state: "running"
       machine_status: "ok"
       temperature: 45.2
       humidity: 82.0
@@ -49,20 +77,55 @@ nodes:
     channel: "simulated_http://127.0.0.1:8000/api/v1/n2"
     simulated: true
     permissions:
-      read: true
-      write: false
+      R0_read: true
+      R1_config: true
+      R2_control: false
+      R3_critical: false
     devices:
-      - name: "temperature"
-        type: "sensor"
-        description: "Ambient environmental temperature in Celsius"
-        channel: "adc_ch0"
-        unit: "C"
-      - name: "humidity"
-        type: "sensor"
-        description: "Ambient environmental relative humidity percentage"
-        channel: "adc_ch1"
-        unit: "%"
+      - name: "zones"
+        type: "sensor_group"
+        description: "Temperature and humidity by zone_id ('hall', 'storage', 'production_floor')"
+        channel: "dht22_multi_zone"
+      - name: "air_quality"
+        type: "sensor_group"
+        description: "Air quality metrics (pm25, pm10, co2)"
+        channel: "sps30_scd30"
+      - name: "measurement_history"
+        type: "sensor_history"
+        description: "Timestamped measurement history"
+        channel: "internal_ring_buffer"
+      - name: "thresholds"
+        type: "config"
+        description: "Environmental alert thresholds"
+        channel: "internal_config"
     initial_state:
+      zones:
+        hall:
+          temperature: 23.5
+          humidity: 55.0
+        storage:
+          temperature: 20.2
+          humidity: 50.0
+        production_floor:
+          temperature: 25.8
+          humidity: 62.0
+      air_quality:
+        pm25: 18.5
+        pm10: 32.0
+        co2: 520.0
+      thresholds:
+        temp_max: 35.0
+        humidity_max: 75.0
+        co2_max: 1000.0
+        pm25_max: 50.0
+      measurement_history:
+        - timestamp: "2026-11-16T12:00:00Z"
+          zone_id: "production_floor"
+          temperature: 25.5
+          humidity: 61.5
+          pm25: 18.0
+          co2: 510.0
+      # Backwards compatibility fields
       temperature: 24.5
       humidity: 60.0
 
@@ -73,33 +136,65 @@ nodes:
     channel: "simulated_http://127.0.0.1:8000/api/v1/n3"
     simulated: true
     permissions:
-      read: true
-      write: true # Only servo gate is writable; RFID & inventory are read-only
+      R0_read: true
+      R1_config: false
+      R2_control: true  # Close gate
+      R3_critical: true # Open gate, request quarantine
     devices:
-      - name: "rfid"
-        type: "sensor"
-        description: "RFID reader for raw material batch tracking (tag and validity)"
+      - name: "rfid_readers"
+        type: "sensor_group"
+        description: "RFID card readers by reader_id ('gate_reader', 'dock_reader') returning card_id only"
         channel: "spi_rfid_rc522"
-      - name: "distance"
-        type: "sensor"
-        description: "Ultrasonic distance sensor for dock detection (cm)"
-        channel: "ultrasonic_hc_sr04"
-        unit: "cm"
+      - name: "lots"
+        type: "data_table"
+        description: "Material lots table (lot_id, expiry_date, status: approved, quarantined, unknown)"
+        channel: "internal_table"
+      - name: "inventory"
+        type: "data_table"
+        description: "Inventory stock by item_id and location_id"
+        channel: "internal_table"
       - name: "gate"
         type: "actuator"
-        description: "Warehouse gate barrier servo (false=closed, true=open)"
+        description: "Warehouse security gate servo barrier (state: open / closed)"
         channel: "pwm_pin_9"
-      - name: "inventory"
-        type: "sensor_state"
-        description: "Simple raw material units inventory count"
-        channel: "internal_counter"
-        unit: "units"
+      - name: "quarantine_queue"
+        type: "queue"
+        description: "Quarantine requests queue (pending, approved, rejected)"
+        channel: "internal_queue"
     initial_state:
+      rfid_readers:
+        gate_reader:
+          card_id: "CARD-A100"
+        dock_reader:
+          card_id: "CARD-D200"
+      lots:
+        LOT-2026-N1-001:
+          lot_id: "LOT-2026-N1-001"
+          expiry_date: "2027-12-31"
+          status: "approved"
+        LOT-2026-OLD-002:
+          lot_id: "LOT-2026-OLD-002"
+          expiry_date: "2026-01-01"
+          status: "quarantined"
+        LOT-UNKNOWN-003:
+          lot_id: "LOT-UNKNOWN-003"
+          expiry_date: "2028-06-30"
+          status: "unknown"
+      inventory:
+        RAW-STEEL-01:
+          LOC-A1: 150
+          LOC-A2: 50
+        BOLT-M8:
+          LOC-B1: 1200
+      gate:
+        state: "closed"
+        is_open: false
+      quarantine_queue: []
+      # Backwards compatibility fields
       rfid_tag: "BATCH-A100"
       rfid_valid: true
       distance: 15.0
       gate_open: false
-      inventory: 150
 
   n4:
     id: "n4"
@@ -108,23 +203,56 @@ nodes:
     channel: "simulated_http://127.0.0.1:8000/api/v1/n4"
     simulated: true
     permissions:
-      read: true
-      write: false # Business actions cannot write; Emergency Stop only controlled via admin
+      R0_read: true
+      R1_config: true   # Advisory permit check
+      R2_control: false # Business actions cannot write hardware safety directly
+      R3_critical: true # Create inspection request
     devices:
       - name: "vibration"
-        type: "sensor"
-        description: "Machine vibration sensor (mm/s)"
+        type: "sensor_group"
+        description: "3-axis vibration (x, y, z) and RMS (mm/s)"
         channel: "i2c_accel_mpu6050"
-        unit: "mm/s"
-      - name: "machine_health"
+      - name: "motor_current"
         type: "sensor"
-        description: "Machine operational health condition ('nominal', 'warning', 'critical')"
-        channel: "internal_diagnostic"
+        description: "Motor phase current in Amperes"
+        channel: "adc_ct_sensor"
+        unit: "A"
       - name: "emergency_stop"
         type: "safety_interlock"
-        description: "Hardware Emergency Stop button state (false=released/normal, true=engaged/emergency)"
+        description: "Physical Emergency Stop button state (false=released, true=engaged)"
         channel: "hardware_estop_relay"
+      - name: "interlocks"
+        type: "safety_interlock_group"
+        description: "Safety interlocks (guard_door: closed/open, light_curtain: clear/interrupted)"
+        channel: "safety_relay_inputs"
+      - name: "anomaly_history"
+        type: "log_history"
+        description: "History of detected anomaly events"
+        channel: "internal_log"
+      - name: "inspection_queue"
+        type: "queue"
+        description: "Maintenance inspection request queue (pending, approved, rejected)"
+        channel: "internal_queue"
+      - name: "machine_health"
+        type: "computed_diagnostic"
+        description: "Machine health score and status computed SOLELY from N4 data (vibration, current, history)"
+        channel: "internal_diagnostic"
     initial_state:
-      vibration: 0.12
-      machine_health: "nominal"
+      vibration:
+        x: 0.08
+        y: 0.09
+        z: 0.06
+        rms: 0.12
+      motor_current: 8.4
       emergency_stop: false
+      interlocks:
+        guard_door: "closed"
+        light_curtain: "clear"
+      anomaly_history: []
+      inspection_queue: []
+      health_score: 95.0
+      health_status: "nominal"
+      anomaly_detected: false
+      # Backwards compatibility fields
+      vibration_rms: 0.13
+      machine_health: "nominal"

@@ -1,0 +1,77 @@
+# ==============================================================================
+# INDUSTRIAL GATEWAY SAFETY RULES CONFIGURATION
+# Project: Tool Calling Evaluation on ZeroClaw for Industrial Gateway
+# Status: APPROVED (Task T5b Checkpoint Approved by Human)
+# Note: All threshold values in this configuration are simulated parameters
+#       designed for research, testing, and benchmark reproducibility.
+#       They are NOT official or certified industrial equipment safety ratings.
+# ==============================================================================
+
+version: "2.2.0"
+status: "APPROVED"
+
+# ------------------------------------------------------------------------------
+# Interlock Safety Policy (Option B Approved)
+# ------------------------------------------------------------------------------
+interlock_policy:
+  selected_option: "B"
+  description: "Plant-wide containment: Any safety interlock violation on N4 blocks warehouse gate opening"
+  interlock_violation_blocks_warehouse_gate: true
+
+# ------------------------------------------------------------------------------
+# 1. Vibration Thresholds (Node N4 - STM32 Accelerometer)
+# ------------------------------------------------------------------------------
+vibration:
+  rms_warning_mm_s: 0.30       # Above this value, health status degrades to 'warning'
+  rms_critical_mm_s: 0.50      # Above this value, health status is 'critical' and line start is blocked
+
+# ------------------------------------------------------------------------------
+# 2. Machine Health & Electrical Thresholds (Node N4)
+# ------------------------------------------------------------------------------
+machine_health:
+  motor_current_nominal_max_a: 15.0   # Maximum nominal motor current (Amperes)
+  motor_current_critical_a: 20.0      # Overcurrent threshold causing 'critical' health status
+  anomaly_history_warning_count: 1    # Anomaly count triggering 'warning'
+  anomaly_history_critical_count: 5   # Anomaly count triggering 'critical'
+
+# ------------------------------------------------------------------------------
+# 3. Maximum Data Age (Staleness / Timeout Thresholds in Seconds)
+# Dữ liệu được xem là CŨ (STALE) khi (current_time - data_timestamp) > max_age_sec.
+# Nếu dữ liệu cũ, Gateway coi như N4_DISCONNECTED_OR_SAFETY_DATA_STALE và từ chối start/open.
+# ------------------------------------------------------------------------------
+stale_data_limits_sec:
+  max_age_emergency_stop_sec: 2.0    # E-Stop heartbeat max age
+  max_age_interlocks_sec: 2.0        # Guard door / light curtain max age
+  max_age_vibration_sec: 5.0         # Vibration sensor telemetry max age
+  max_age_motor_current_sec: 5.0     # Motor current telemetry max age
+  max_age_environment_sec: 30.0      # Ambient environmental readings max age
+
+# ------------------------------------------------------------------------------
+# 4. Valid Ranges for Environmental Threshold Configuration (update_threshold)
+# ------------------------------------------------------------------------------
+environment_threshold_ranges:
+  temp_max_c:
+    min: 10.0
+    max: 60.0
+    default_proposed: 35.0
+  humidity_max_percent:
+    min: 20.0
+    max: 95.0
+    default_proposed: 75.0
+  co2_max_ppm:
+    min: 400.0
+    max: 5000.0
+    default_proposed: 1000.0
+  pm25_max_ug_m3:
+    min: 0.0
+    max: 500.0
+    default_proposed: 50.0
+
+# ------------------------------------------------------------------------------
+# 5. Actuator Ranges (Node N1 - Production Control)
+# ------------------------------------------------------------------------------
+actuators:
+  fan_speed_min: 0
+  fan_speed_max: 100
+  fan_speed_default: 100
+  supported_fans: [1, 2]

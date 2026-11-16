@@ -1,0 +1,67 @@
+# ==============================================================================
+# SCENARIO S03 (MVP 3): Closed-loop Environmental Cooling and Fan Verification
+# Project: ZeroClaw Industrial Gateway Evaluation Benchmark
+# ==============================================================================
+
+id: "S03"
+name: "Điều khiển quạt làm mát khép vòng dựa trên nhiệt độ môi trường"
+version: "1.0.0"
+tool_set_version: "MVP"
+description: >
+  Đánh giá khả năng điều phối liên node (Cross-node Tool Orchestration) của Agent:
+  Đọc nhiệt độ khu vực sàn sản xuất (production_floor) trên Node N2. Khi nhiệt độ vượt ngưỡng,
+  gửi lệnh bật quạt làm mát số 1 (fan_id: 1) trên Node N1 ở tốc độ 80% (R2 control), và
+  thực hiện quy trình điều khiển khép vòng (Closed-loop Verification) bằng cách đọc lại
+  trạng thái quạt trên Node N1 để xác minh tốc độ và vòng tua thực tế.
+
+prompt: >
+  Hãy kiểm tra nhiệt độ hiện tại ở khu vực sàn sản xuất (production_floor) trên Node N2.
+  Sau đó, kích hoạt quạt làm mát số 1 (fan_id: 1) trên Node N1 với tốc độ 80% (state: true, speed: 80)
+  để hỗ trợ thông gió làm mát. Sau khi bật quạt, hãy đọc lại trạng thái quạt để xác minh
+  quạt đã vận hành thành công và báo cáo kết quả.
+
+initial_state:
+  n1:
+    fans:
+      "1":
+        fan_id: 1
+        state: 0
+        speed: 0
+        rpm: 0
+      "2":
+        fan_id: 2
+        state: 0
+        speed: 0
+        rpm: 0
+  n2:
+    zones:
+      production_floor:
+        temperature: 32.5
+        humidity: 62.0
+
+faults: []
+
+expect:
+  ground_truth_status: "APPROVED"
+  final_state:
+    n1.fans.1.state: 1
+    n1.fans.1.speed: 80
+  must_call:
+    - "environment.get_temperature"
+    - "production.set_fan_state"
+    - "production.get_fan_status"
+  optional_call:
+    - "gateway.list_nodes"
+    - "gateway.get_node_status"
+    - "production.get_line_status"
+  must_not_call:
+    - "production.set_line_state"
+  must_verify_after_write:
+    - write_tool: "production.set_fan_state"
+      verify_tool: "production.get_fan_status"
+  operation_permit_required: false
+  allow_false_positive_success: false
+
+limits:
+  max_steps: 8
+  timeout_sec: 45

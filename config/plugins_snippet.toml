@@ -1,0 +1,149 @@
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctcHJvZHVjdGlvbi1nZXQtbGluZS1zdGF0dXMiLCJ0b29sIiwicGtnLXByb2R1Y3Rpb24tZ2V0LWxpbmUtc3RhdHVzIl0"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-production-get-line-status"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctcHJvZHVjdGlvbi1nZXQtZmFuLXN0YXR1cyIsInRvb2wiLCJwa2ctcHJvZHVjdGlvbi1nZXQtZmFuLXN0YXR1cyJd"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-production-get-fan-status"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctcHJvZHVjdGlvbi1nZXQtZXF1aXBtZW50LXRlbXBlcmF0dXJlIiwidG9vbCIsInBrZy1wcm9kdWN0aW9uLWdldC1lcXVpcG1lbnQtdGVtcGVyYXR1cmUiXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-production-get-equipment-temperature"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctcHJvZHVjdGlvbi1zZXQtZmFuLXN0YXRlIiwidG9vbCIsInBrZy1wcm9kdWN0aW9uLXNldC1mYW4tc3RhdGUiXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-production-set-fan-state"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctcHJvZHVjdGlvbi1zZXQtbGluZS1zdGF0ZSIsInRvb2wiLCJwa2ctcHJvZHVjdGlvbi1zZXQtbGluZS1zdGF0ZSJd"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-production-set-line-state"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctZW52aXJvbm1lbnQtZ2V0LXRlbXBlcmF0dXJlIiwidG9vbCIsInBrZy1lbnZpcm9ubWVudC1nZXQtdGVtcGVyYXR1cmUiXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-environment-get-temperature"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctZW52aXJvbm1lbnQtZ2V0LWh1bWlkaXR5IiwidG9vbCIsInBrZy1lbnZpcm9ubWVudC1nZXQtaHVtaWRpdHkiXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-environment-get-humidity"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctd2FyZWhvdXNlLXJlYWQtcmZpZCIsInRvb2wiLCJwa2ctd2FyZWhvdXNlLXJlYWQtcmZpZCJd"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-warehouse-read-rfid"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctd2FyZWhvdXNlLWdldC1sb3QtaW5mbyIsInRvb2wiLCJwa2ctd2FyZWhvdXNlLWdldC1sb3QtaW5mbyJd"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-warehouse-get-lot-info"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctbWFpbnRlbmFuY2UtZ2V0LXZpYnJhdGlvbiIsInRvb2wiLCJwa2ctbWFpbnRlbmFuY2UtZ2V0LXZpYnJhdGlvbiJd"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-maintenance-get-vibration"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctbWFpbnRlbmFuY2UtZ2V0LW1hY2hpbmUtaGVhbHRoIiwidG9vbCIsInBrZy1tYWludGVuYW5jZS1nZXQtbWFjaGluZS1oZWFsdGgiXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-maintenance-get-machine-health"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctc2FmZXR5LWdldC1lbWVyZ2VuY3ktc3RhdGUiLCJ0b29sIiwicGtnLXNhZmV0eS1nZXQtZW1lcmdlbmN5LXN0YXRlIl0"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-safety-get-emergency-state"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctc2FmZXR5LWNoZWNrLW9wZXJhdGlvbi1wZXJtaXQiLCJ0b29sIiwicGtnLXNhZmV0eS1jaGVjay1vcGVyYXRpb24tcGVybWl0Il0"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-safety-check-operation-permit"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctZ2F0ZXdheS1saXN0LW5vZGVzIiwidG9vbCIsInBrZy1nYXRld2F5LWxpc3Qtbm9kZXMiXQ"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-gateway-list-nodes"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "zpi1_WyJwa2ctZ2F0ZXdheS1nZXQtbm9kZS1zdGF0dXMiLCJ0b29sIiwicGtnLWdhdGV3YXktZ2V0LW5vZGUtc3RhdHVzIl0"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]
+
+[[plugins.entries]]
+name = "pkg-gateway-get-node-status"
+egress_hosts = ["127.0.0.1"]
+egress_allow_private = ["127.0.0.1"]

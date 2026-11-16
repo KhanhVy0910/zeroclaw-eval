@@ -60,7 +60,7 @@ async def test_admin_reset_to_fixture(gateway_client: httpx.AsyncClient):
 
 @pytest.mark.asyncio
 async def test_emergency_stop_interlock(gateway_client: httpx.AsyncClient):
-    """Verify Emergency Stop engaged on N4 blocks machine control with SAFETY_VIOLATION."""
+    """Verify Emergency Stop engaged on N4 blocks line start with SAFETY_VIOLATION, while fan/stop are allowed."""
     # Ensure initial state: fan control works
     resp1 = await gateway_client.post(
         "/api/v1/n1/production/fan", json={"state": True}
@@ -72,9 +72,9 @@ async def test_emergency_stop_interlock(gateway_client: httpx.AsyncClient):
         "/admin/nodes/n4/state", json={"state": {"emergency_stop": True}}
     )
 
-    # Now attempt fan control on N1: MUST be blocked with 403 SAFETY_VIOLATION
+    # Attempt line start on N1: MUST be blocked with 403 SAFETY_VIOLATION
     resp_blocked = await gateway_client.post(
-        "/api/v1/n1/production/fan", json={"state": False}
+        "/api/v1/n1/production/line_state", json={"line_state": "start"}
     )
     assert resp_blocked.status_code == 403
     body = resp_blocked.json()
@@ -82,12 +82,27 @@ async def test_emergency_stop_interlock(gateway_client: httpx.AsyncClient):
     assert body["error"]["code"] == "SAFETY_VIOLATION"
     assert "Emergency Stop" in body["error"]["message"]
 
+    # Rule 3: Fan control and line stop/hold are STILL ALLOWED when E-Stop is active
+    resp_fan = await gateway_client.post(
+        "/api/v1/n1/production/fan", json={"state": False}
+    )
+    assert resp_fan.status_code == 200
+
+    resp_stop = await gateway_client.post(
+        "/api/v1/n1/production/line_state", json={"line_state": "stop"}
+    )
+    assert resp_stop.status_code == 200
+
     # Release Emergency Stop via admin endpoint
     await gateway_client.post(
         "/admin/nodes/n4/state", json={"state": {"emergency_stop": False}}
     )
 
-    # Fan control works again
+    # Line start works again
+    resp_start = await gateway_client.post(
+        "/api/v1/n1/production/line_state", json={"line_state": "start"}
+    )
+    assert resp_start.status_code == 200
     resp_released = await gateway_client.post(
         "/api/v1/n1/production/fan", json={"state": False}
     )
