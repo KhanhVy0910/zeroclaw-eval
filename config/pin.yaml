@@ -1,0 +1,29 @@
+# Pin configuration for ZeroClaw source repository
+# Established in Task T4
+
+repository: "zeroclaw-labs/zeroclaw"
+local_path: "E:/gateway/zeroclaw-lab"
+
+pinned_commit: "067c768bbcbc81e48a03348a0dbb7d1aedcd7c78"
+pinned_commit_short: "067c768bb"
+pinned_commit_date: "2026-10-24T22:52:34+07:00"
+pinned_commit_author: "KhanhVy0910 <phamthikhanhvi.ts@gmail.com>"
+pinned_commit_subject: "Notting change"
+
+pinned_tag: "v0.8.6"
+pinned_tag_commit: "56e8486c8a798ee787e9c5f87b38cb70a256fe45"
+upstream_release_commit: "c47322131b79d2a138cbe698fef7d8b56d3545b6"
+
+branches:
+  base_metrics: "exp/base-metrics"
+  s0_baseline: "exp/s0-baseline"
+  s1_react_guarded: "exp/s1-react-guarded"
+  s2_plan_execute: "exp/s2-plan-execute"
+  s3_state_machine: "exp/s3-state-machine"
+  s4_orchestrator_workers: "exp/s4-orchestrator-workers"
+  s5_parallel: "exp/s5-parallel"
+
+model:
+  provider: "gemini.gemini"
+  model_name: "gemini-3.5-flash-lite"
+  temperature: 0.0

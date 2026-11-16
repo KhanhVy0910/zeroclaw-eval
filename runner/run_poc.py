@@ -129,7 +129,7 @@ def filter_trace_events(events: List[Dict[str, Any]]) -> Dict[str, Any]:
 
 def run_zeroclaw_turn(
     message: str,
-    timeout_secs: int = 45,
+    timeout_secs: int = 120,
 ) -> subprocess.CompletedProcess[str]:
     """Execute a single headless ZeroClaw agent turn."""
     cmd = [
