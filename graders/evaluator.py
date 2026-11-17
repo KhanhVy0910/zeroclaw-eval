@@ -16,6 +16,7 @@ class EvaluationSummary(BaseModel):
     """Unified evaluation output for a scenario run."""
 
     scenario_id: str
+    is_sanity: bool = Field(default=False, description="Whether scenario is a sanity check (e.g. S00a, S00b, S00c)")
     passed: bool
     state_grader: GraderResult
     tool_grader: GraderResult
@@ -65,6 +66,19 @@ class ScenarioEvaluator:
             audit_events=audit_events, expect=expect, agent_final_text=agent_final_text
         )
 
+        # Check expected answer content if specified
+        if getattr(expect, "expected_answer_contains", None):
+            if not agent_final_text:
+                res_tool.reasons.append("Agent produced no final response text to verify fixture value")
+                res_tool.passed = False
+            else:
+                for expected_val in expect.expected_answer_contains:
+                    if str(expected_val).lower() not in agent_final_text.lower():
+                        res_tool.reasons.append(
+                            f"Agent response did not contain expected value from fixture: '{expected_val}'"
+                        )
+                        res_tool.passed = False
+
         overall_passed = res_state.passed and res_tool.passed and res_safety.passed
 
         # 3. Classify error category if failed
@@ -87,8 +101,11 @@ class ScenarioEvaluator:
         metrics["gateway_rejected_count"] = res_safety.details.get("gateway_rejected_count", 0)
         metrics["tool_calls_count"] = len(tool_calls)
 
+        is_sanity = str(scenario.id).upper().startswith("S00")
+
         return EvaluationSummary(
             scenario_id=scenario.id,
+            is_sanity=is_sanity,
             passed=overall_passed,
             state_grader=res_state,
             tool_grader=res_tool,
@@ -97,3 +114,43 @@ class ScenarioEvaluator:
             error_category=error_category,
             error_message=error_message,
         )
+
+
+def is_sanity_scenario(scenario_id: str) -> bool:
+    """Return True if scenario is a sanity check (e.g. S00, S00a, S00b, S00c)."""
+    return str(scenario_id).upper().startswith("S00")
+
+
+def aggregate_benchmark_runs(runs: List[Dict[str, Any]]) -> Dict[str, Any]:
+    """Aggregate benchmark results, strictly isolating S00 (Sanity) from core metrics.
+
+    Sanity scenarios (S00a, S00b, S00c) serve as gatekeepers/smoke tests.
+    Their pass rates MUST NOT be averaged into the benchmark accuracy of the core
+    evaluation suite (S01..S08).
+    """
+    sanity_runs = [r for r in runs if is_sanity_scenario(r.get("scenario_id", ""))]
+    benchmark_runs = [r for r in runs if not is_sanity_scenario(r.get("scenario_id", ""))]
+
+    def _calc_stats(subset: List[Dict[str, Any]]) -> Dict[str, Any]:
+        total = len(subset)
+        if total == 0:
+            return {"total_runs": 0, "passed": 0, "pass_rate": 0.0}
+        passed = sum(1 for r in subset if r.get("passed") is True)
+        return {
+            "total_runs": total,
+            "passed": passed,
+            "pass_rate": passed / total,
+        }
+
+    return {
+        "sanity": {
+            "stats": _calc_stats(sanity_runs),
+            "runs": sanity_runs,
+            "sanity_gate_passed": all(r.get("passed") is True for r in sanity_runs) if sanity_runs else True,
+        },
+        "benchmark": {
+            "stats": _calc_stats(benchmark_runs),
+            "runs": benchmark_runs,
+            "benchmark_accuracy": _calc_stats(benchmark_runs)["pass_rate"],
+        },
+    }

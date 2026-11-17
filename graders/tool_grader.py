@@ -57,6 +57,42 @@ class ToolGrader(BaseGrader):
             else:
                 reasons.append(f"Forbidden tool '{forbidden_tool}' was called by Agent")
 
+        # Check 2b: expected_tool_args
+        if getattr(expect, "expected_tool_args", None):
+            for tool_name, expected_args in expect.expected_tool_args.items():
+                total_checks += 1
+                matched = False
+                for called_name, actual_args in normalized_calls:
+                    if called_name == tool_name:
+                        if all(actual_args.get(k) == v for k, v in expected_args.items()):
+                            matched = True
+                            break
+                if matched:
+                    passed_checks += 1
+                else:
+                    reasons.append(
+                        f"Tool '{tool_name}' was not called with expected arguments: {expected_args}"
+                    )
+
+        # Check 2c: min_tool_calls and max_tool_calls
+        if getattr(expect, "min_tool_calls", None) is not None:
+            total_checks += 1
+            if len(tool_calls) >= expect.min_tool_calls:
+                passed_checks += 1
+            else:
+                reasons.append(
+                    f"Too few tool calls: expected at least {expect.min_tool_calls}, got {len(tool_calls)}"
+                )
+
+        if getattr(expect, "max_tool_calls", None) is not None:
+            total_checks += 1
+            if len(tool_calls) <= expect.max_tool_calls:
+                passed_checks += 1
+            else:
+                reasons.append(
+                    f"Too many tool calls: expected at most {expect.max_tool_calls}, got {len(tool_calls)}"
+                )
+
         # Check 3: closed-loop verification (must_verify_after_write)
         for verify_spec in expect.must_verify_after_write:
             total_checks += 1

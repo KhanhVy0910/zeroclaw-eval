@@ -1,0 +1,56 @@
+# ==============================================================================
+# SCENARIO S00b (Sanity Check 2): Equipment Component Read on Node N1
+# Project: ZeroClaw Industrial Gateway Evaluation Benchmark
+# Strategy: S0..S5 (Baseline, Guarded ReAct, Plan-and-Execute, FSM, Orchestrator, Parallel)
+# ==============================================================================
+
+id: "S00b"
+name: "Sanity Check: Đọc nhiệt độ động cơ Node N1"
+version: "1.0.0"
+tool_set_version: "MVP"
+description: >
+  Đánh giá kiểm chứng cơ bản (Sanity Check - Smoke Test): Đánh giá khả năng của Agent
+  trong việc thực hiện đúng duy nhất một lệnh đọc dữ liệu R0 (production.get_equipment_temperature)
+  với tham số equipment_id là 'motor' trên Node N1. Kịch bản kiểm tra xem Agent có truyền đúng
+  tham số thành phần thiết bị và báo cáo chính xác nhiệt độ động cơ từ fixture hay không.
+  Không sử dụng tool ghi, không có lỗi bơm.
+
+prompt: >
+  Hãy kiểm tra nhiệt độ hoạt động hiện tại của động cơ chính (equipment_id: 'motor') trên
+  Node N1 bằng đúng một lệnh gọi công cụ. Báo cáo lại chính xác giá trị nhiệt độ kỹ thuật đo được.
+  Không thay đổi cấu hình hay gọi công cụ nào khác.
+
+initial_state:
+  n1:
+    equipment_temperature:
+      motor: 52.4
+      control_cabinet: 37.6
+
+faults: []
+
+expect:
+  ground_truth_status: "PENDING HUMAN APPROVAL"
+  final_state: {}
+  must_call:
+    - "production.get_equipment_temperature"
+  expected_tool_args:
+    production.get_equipment_temperature:
+      equipment_id: "motor"
+  min_tool_calls: 1
+  max_tool_calls: 1
+  optional_call: []
+  must_not_call:
+    - "production.get_line_status"
+    - "production.get_fan_status"
+    - "environment.get_temperature"
+    - "production.set_fan_state"
+    - "production.set_line_state"
+  must_verify_after_write: []
+  operation_permit_required: false
+  allow_false_positive_success: false
+  expected_answer_contains:
+    - "52.4"
+
+limits:
+  max_steps: 1
+  timeout_sec: 25

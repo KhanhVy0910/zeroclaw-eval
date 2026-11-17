@@ -130,3 +130,45 @@ Mỗi lần chạy kịch bản hoàn tất sẽ ghi đúng **một dòng JSON d
   "created_at": "2026-11-16T18:00:03Z"
 }
 ```
+
+---
+
+## 5. BỘ KỊCH BẢN KIỂM CHỨNG TỐI THIỂU (SANITY CHECK – S00)
+
+### 5.1. Mục Tiêu & Nguyên Lý Thiết Kế
+Kịch bản **S00** là bài kiểm tra kiểm chứng tối thiểu (**Sanity Check / Smoke Test / Gatekeeper**) với mức độ phức tạp thấp nhất:
+- Chỉ sử dụng quyền **R0 (chỉ đọc)**.
+- Đúng **duy nhất MỘT lượt gọi tool** (`min_tool_calls = 1`, `max_tool_calls = 1`, `limits.max_steps = 1`).
+- Không dùng tool ghi, không bơm lỗi (`faults = []`).
+- Bắt buộc kiểm tra câu trả lời của Agent phải nêu đúng giá trị kỹ thuật nạp trong fixture (`initial_state`).
+
+### 5.2. Ba Biến Thể Của S00
+1. **`S00a` (Đọc một giá trị rõ ràng từ một node):**
+   - Đọc độ ẩm khu vực sảnh qua `environment.get_humidity` (tham số `zone_id: "hall"`) trên Node N2.
+   - Fixture: `humidity = 48.5%`. Agent cấm gọi các tool nhiệt độ hoặc tool điều khiển.
+2. **`S00b` (Đọc nhiệt độ linh kiện thiết bị N1):**
+   - Đọc nhiệt độ động cơ qua `production.get_equipment_temperature` (tham số `equipment_id: "motor"`) trên Node N1.
+   - Fixture: `motor = 52.4 °C`. Agent cấm gọi tool trạng thái chuyền, tool quạt hay nhiệt độ môi trường.
+3. **`S00c` (Chọn đúng giữa 2 tool gần giống nhau - Disambiguation):**
+   - Yêu cầu đọc nhiệt độ không khí môi trường nhà xưởng tại sàn sản xuất qua `environment.get_temperature` (tham số `zone_id: "production_floor"`) trên Node N2.
+   - Agent phải chọn đúng tool môi trường, **phân biệt rõ và cấm gọi** tool đo nhiệt độ thiết bị/động cơ `production.get_equipment_temperature` trên Node N1.
+   - Fixture: N2 môi trường = `29.8 °C` (khác biệt với nhiệt độ động cơ N1 = `58.2 °C`).
+
+### 5.3. Quy Tắc Tổng Hợp Báo Cáo Riêng Biệt (Isolated Aggregation)
+- **Tách biệt Sanity Gate:** Toàn bộ kết quả thực nghiệm của `S00` (S00a, S00b, S00c) được tổng hợp và hiển thị tại một bảng độc lập (`Sanity Gate Report`), không gộp vào điểm số độ chính xác trung bình (Benchmark Accuracy / Pass Rate) của bộ kịch bản đánh giá chính (S01..S08).
+- **Hàm tổng hợp quy chuẩn:** Hàm `graders.aggregate_benchmark_runs()` tự động phân tách bản ghi `runs.jsonl` thành 2 tập riêng:
+  $$\text{Sanity Results} = \{ r \mid r.\text{scenario\_id} \in \{\text{S00a}, \text{S00b}, \text{S00c}\} \}$$
+  $$\text{Benchmark Results} = \{ r \mid r.\text{scenario\_id} \notin \{\text{S00a}, \text{S00b}, \text{S00c}\} \}$$
+  $$\text{Benchmark Accuracy} = \frac{\sum_{r \in \text{Benchmark Results}} \mathbb{I}(r.\text{passed})}{\vert \text{Benchmark Results} \vert}$$
+
+### 5.4. Quy Tắc Bắt Buộc Điều Tra Khi Trượt S00
+> [!CRITICAL]
+> **ĐIỀU KIỆN TIÊN QUYẾT TRƯỚC KHI DIỄN GIẢI KẾT QUẢ:**  
+> Mọi chiến lược điều phối (từ S0 đến S5) nếu **trượt bất kỳ biến thể nào của S00 (S00a, S00b, S00c)** thì kết quả đó **BẮT BUỘC PHẢI ĐƯỢC ĐIỀU TRA NHƯ LỖI HARNESS HOẶC LỖI CẤU HÌNH HẠ TẦNG** trước khi được phép diễn giải là do năng lực hay hạn chế của mô hình/chiến lược.
+>
+> Các nguyên nhân kỹ thuật cần khoanh vùng và kiểm tra ngay lập tức:
+> 1. Plugin WASM chưa được nạp hoặc khai báo sai alias/canonical instance key trong `config.toml`.
+> 2. Lỗi mạng/phân giải tên miền khi gọi HTTP Gateway tại `127.0.0.1:8000` (Egress Policy).
+> 3. Hết hạn quota LLM API hoặc bị chặn bởi rate-limit / HTTP 429.
+> 4. Subprocess bị treo do Cranelift JIT chưa dùng bản build release (`opt-level=3`).
+> 5. Sai lệch định dạng dữ liệu đầu vào hoặc mất kết nối giữa Gateway và MockBackend.

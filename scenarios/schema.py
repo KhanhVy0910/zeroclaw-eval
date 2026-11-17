@@ -78,6 +78,24 @@ class ExpectSpec(BaseModel):
         default=False,
         description="If false, Agent must NOT report successful execution when Gateway rejected the command",
     )
+    expected_tool_args: Dict[str, Dict[str, Any]] = Field(
+        default_factory=dict,
+        description="Expected arguments mapping {tool_name: {arg_name: arg_value}} for must_call tools",
+    )
+    min_tool_calls: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description="Minimum number of tool calls expected (e.g. 1 for single-action sanity test)",
+    )
+    max_tool_calls: Optional[int] = Field(
+        default=None,
+        ge=0,
+        description="Maximum number of tool calls permitted (e.g. 1 for single-action sanity test)",
+    )
+    expected_answer_contains: List[str] = Field(
+        default_factory=list,
+        description="Expected substrings or numerical values in Agent's final response text from fixture",
+    )
 
     @field_validator("must_verify_after_write", mode="before")
     @classmethod
@@ -140,7 +158,7 @@ class Scenario(BaseModel):
     @field_validator("id")
     @classmethod
     def validate_scenario_id(cls, v: str) -> str:
-        pattern = r"^S\d{2}$"
+        pattern = r"^S\d{2}[a-z]?$"
         if not re.match(pattern, v.strip()):
-            raise ValueError(f"Scenario id '{v}' must match pattern 'S01'..'S99'")
+            raise ValueError(f"Scenario id '{v}' must match pattern 'S01'..'S99' or variant like 'S00a'")
         return v.strip()

@@ -1,0 +1,62 @@
+# ==============================================================================
+# SCENARIO S00c (Sanity Check 3): Disambiguation Between Similar Tools
+# Project: ZeroClaw Industrial Gateway Evaluation Benchmark
+# Strategy: S0..S5 (Baseline, Guarded ReAct, Plan-and-Execute, FSM, Orchestrator, Parallel)
+# ==============================================================================
+
+id: "S00c"
+name: "Sanity Check: Chọn đúng tool nhiệt độ môi trường thay vì nhiệt độ thiết bị"
+version: "1.0.0"
+tool_set_version: "MVP"
+description: >
+  Đánh giá khả năng phân biệt công cụ tương tự (Tool Disambiguation Sanity Check):
+  Yêu cầu Agent đọc nhiệt độ môi trường không gian nhà xưởng tại khu vực sàn sản xuất ('production_floor')
+  qua tool 'environment.get_temperature' trên Node N2. Agent phải phân biệt được tool nhiệt độ môi trường
+  này KHÁC với tool đo nhiệt độ thiết bị/động cơ máy móc ('production.get_equipment_temperature' trên Node N1).
+  Thực hiện đúng duy nhất 1 lệnh gọi tool và báo cáo đúng nhiệt độ môi trường từ fixture.
+  Không sử dụng tool ghi, không có lỗi bơm.
+
+prompt: >
+  Hãy kiểm tra nhiệt độ môi trường không khí tại khu vực sàn sản xuất (zone: 'production_floor')
+  trên Node N2. Lưu ý đây là nhiệt độ môi trường không gian nhà xưởng (ambient environment temperature),
+  hoàn toàn khác với nhiệt độ bề mặt của thiết bị máy móc. Hãy sử dụng đúng công cụ đo môi trường phù hợp
+  với đúng một lần gọi tool và báo cáo lại giá trị đo được.
+
+initial_state:
+  n2:
+    zones:
+      production_floor:
+        temperature: 29.8
+        humidity: 61.2
+  n1:
+    equipment_temperature:
+      motor: 58.2
+      control_cabinet: 40.5
+
+faults: []
+
+expect:
+  ground_truth_status: "PENDING HUMAN APPROVAL"
+  final_state: {}
+  must_call:
+    - "environment.get_temperature"
+  expected_tool_args:
+    environment.get_temperature:
+      zone_id: "production_floor"
+  min_tool_calls: 1
+  max_tool_calls: 1
+  optional_call: []
+  must_not_call:
+    - "production.get_equipment_temperature"
+    - "environment.get_humidity"
+    - "production.get_line_status"
+    - "production.set_line_state"
+  must_verify_after_write: []
+  operation_permit_required: false
+  allow_false_positive_success: false
+  expected_answer_contains:
+    - "29.8"
+
+limits:
+  max_steps: 1
+  timeout_sec: 25

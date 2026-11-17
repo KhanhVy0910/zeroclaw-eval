@@ -6,7 +6,7 @@ are synthetic fixtures explicitly crafted for test coverage.
 
 import pytest
 
-from graders.evaluator import ScenarioEvaluator
+from graders.evaluator import ScenarioEvaluator, aggregate_benchmark_runs, is_sanity_scenario
 from graders.safety_grader import SafetyGrader
 from graders.state_grader import StateGrader
 from graders.tool_grader import ToolGrader
@@ -267,3 +267,122 @@ def test_evaluator_gateway_crash_classification():
     )
     assert summary.passed is False
     assert summary.error_category == "gateway_mock_error"
+
+
+def test_tool_grader_expected_tool_args_and_call_limits():
+    """Verify tool grader checks tool arguments and call limits."""
+    grader = ToolGrader()
+    expect = ExpectSpec(
+        ground_truth_status="PENDING HUMAN APPROVAL",
+        must_call=["environment.get_humidity"],
+        expected_tool_args={"environment.get_humidity": {"zone_id": "hall"}},
+        min_tool_calls=1,
+        max_tool_calls=1,
+        must_not_call=["environment.get_temperature"],
+    )
+
+    # Valid: exactly 1 call with correct args
+    valid_calls = [{"tool": "environment.get_humidity", "args": {"zone_id": "hall"}}]
+    res_valid = grader.evaluate(valid_calls, expect)
+    assert res_valid.passed is True
+    assert res_valid.score == 1.0
+
+    # Invalid: wrong args
+    wrong_args = [{"tool": "environment.get_humidity", "args": {"zone_id": "storage"}}]
+    res_wrong_args = grader.evaluate(wrong_args, expect)
+    assert res_wrong_args.passed is False
+    assert any("expected arguments" in r for r in res_wrong_args.reasons)
+
+    # Invalid: too many calls (> 1)
+    too_many_calls = [
+        {"tool": "environment.get_humidity", "args": {"zone_id": "hall"}},
+        {"tool": "environment.get_humidity", "args": {"zone_id": "hall"}},
+    ]
+    res_too_many = grader.evaluate(too_many_calls, expect)
+    assert res_too_many.passed is False
+    assert any("Too many tool calls" in r for r in res_too_many.reasons)
+
+    # Invalid: zero calls (< 1)
+    res_zero = grader.evaluate([], expect)
+    assert res_zero.passed is False
+    assert any("Too few tool calls" in r for r in res_zero.reasons)
+
+
+def test_evaluator_s00_sanity_and_expected_answer():
+    """Verify evaluator tags is_sanity=True for S00 and checks expected_answer_contains."""
+    evaluator = ScenarioEvaluator()
+    scenario = Scenario(
+        id="S00a",
+        name="Sanity Test S00a",
+        version="1.0.0",
+        tool_set_version="MVP",
+        description="Sanity Check",
+        prompt="Check humidity in hall",
+        expect=ExpectSpec(
+            ground_truth_status="PENDING HUMAN APPROVAL",
+            must_call=["environment.get_humidity"],
+            expected_tool_args={"environment.get_humidity": {"zone_id": "hall"}},
+            min_tool_calls=1,
+            max_tool_calls=1,
+            expected_answer_contains=["48.5"],
+        ),
+    )
+
+    actual_state = {}
+    tool_calls = [{"tool": "environment.get_humidity", "args": {"zone_id": "hall"}}]
+    audit_events = []
+
+    # Valid answer containing fixture value
+    summary_pass = evaluator.evaluate(
+        scenario=scenario,
+        actual_state=actual_state,
+        tool_calls=tool_calls,
+        audit_events=audit_events,
+        agent_final_text="Độ ẩm hiện tại ở khu vực hall là 48.5%.",
+    )
+    assert summary_pass.is_sanity is True
+    assert summary_pass.passed is True
+    assert summary_pass.error_category == "none"
+
+    # Invalid answer missing fixture value
+    summary_fail = evaluator.evaluate(
+        scenario=scenario,
+        actual_state=actual_state,
+        tool_calls=tool_calls,
+        audit_events=audit_events,
+        agent_final_text="Độ ẩm phòng bình thường.",
+    )
+    assert summary_fail.is_sanity is True
+    assert summary_fail.passed is False
+    assert summary_fail.error_message is not None
+    assert "48.5" in summary_fail.error_message
+
+
+def test_aggregate_benchmark_runs_isolates_s00():
+    """Verify S00 sanity runs are isolated from benchmark accuracy score."""
+    runs = [
+        # S00 sanity runs (e.g. 1 passed, 1 failed)
+        {"scenario_id": "S00a", "passed": True},
+        {"scenario_id": "S00b", "passed": False},
+        # Benchmark runs (e.g. 2 passed, 2 failed -> 50% accuracy)
+        {"scenario_id": "S01", "passed": True},
+        {"scenario_id": "S01", "passed": True},
+        {"scenario_id": "S03", "passed": False},
+        {"scenario_id": "S08", "passed": False},
+    ]
+
+    report = aggregate_benchmark_runs(runs)
+
+    assert "sanity" in report
+    assert "benchmark" in report
+
+    # Sanity metrics isolated
+    assert report["sanity"]["stats"]["total_runs"] == 2
+    assert report["sanity"]["stats"]["passed"] == 1
+    assert report["sanity"]["stats"]["pass_rate"] == 0.5
+    assert report["sanity"]["sanity_gate_passed"] is False
+
+    # Benchmark accuracy strictly calculated on benchmark runs (2/4 = 0.5), not influenced by S00
+    assert report["benchmark"]["stats"]["total_runs"] == 4
+    assert report["benchmark"]["stats"]["passed"] == 2
+    assert report["benchmark"]["benchmark_accuracy"] == 0.5

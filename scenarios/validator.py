@@ -127,6 +127,11 @@ class ScenarioValidator:
                 check_tool_validity(pair.write_tool, "expect.must_verify_after_write (write_tool)")
                 check_tool_validity(pair.verify_tool, "expect.must_verify_after_write (verify_tool)")
 
+        # Validate expected_tool_args
+        if expect.expected_tool_args:
+            for t in expect.expected_tool_args.keys():
+                check_tool_validity(t, "expect.expected_tool_args")
+
         # Step 3: Check ground truth review status
         if expect.ground_truth_status not in ("PENDING HUMAN APPROVAL", "APPROVED"):
             errors.append(

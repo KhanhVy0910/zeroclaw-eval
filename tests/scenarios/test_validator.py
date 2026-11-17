@@ -26,13 +26,32 @@ def validator() -> ScenarioValidator:
 
 
 def test_validator_all_real_scenarios_pass(validator: ScenarioValidator):
-    """Verify that all 3 official MVP scenarios in scenarios/ pass validation."""
+    """Verify that all scenarios in scenarios/ pass validation."""
     results = validator.validate_all(scenarios_dir=SCENARIOS_DIR)
-    assert len(results) == 3, f"Expected 3 scenarios, found {len(results)}"
+    assert len(results) >= 3, f"Expected at least 3 scenarios, found {len(results)}"
     for r in results:
         assert r.valid is True, f"Scenario {r.scenario_id} failed validation with errors: {r.errors}"
         assert r.scenario is not None
-        assert r.scenario.expect.ground_truth_status == "APPROVED"
+        if r.scenario_id in ("S01", "S03", "S08"):
+            assert r.scenario.expect.ground_truth_status == "APPROVED"
+        elif r.scenario_id.startswith("S00"):
+            assert r.scenario.expect.ground_truth_status == "PENDING HUMAN APPROVAL"
+
+
+def test_validator_s00_sanity_variants(validator: ScenarioValidator):
+    """Verify that all 3 S00 sanity variants pass validation with PENDING HUMAN APPROVAL."""
+    for vid in ("S00a", "S00b", "S00c"):
+        res = validator.validate_file(SCENARIOS_DIR / "S00" / vid / "scenario.yaml")
+        assert res.valid is True, f"{vid} failed: {res.errors}"
+        sc = res.scenario
+        assert sc.id == vid
+        assert sc.tool_set_version == "MVP"
+        assert sc.expect.ground_truth_status == "PENDING HUMAN APPROVAL"
+        assert len(sc.expect.must_call) == 1
+        assert sc.limits.max_steps == 1
+        assert sc.expect.min_tool_calls == 1
+        assert sc.expect.max_tool_calls == 1
+        assert len(sc.expect.expected_answer_contains) == 1
 
 
 def test_validator_scenario_s01_details(validator: ScenarioValidator):

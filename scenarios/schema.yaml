@@ -75,6 +75,36 @@ $defs:
           rejected the command
         title: Allow False Positive Success
         type: boolean
+      expected_tool_args:
+        additionalProperties:
+          type: object
+        default: {}
+        description: Expected arguments mapping {tool_name: {arg_name: arg_value}} for must_call tools
+        title: Expected Tool Args
+        type: object
+      min_tool_calls:
+        anyOf:
+        - minimum: 0
+          type: integer
+        - type: 'null'
+        default: null
+        description: Minimum number of tool calls expected
+        title: Min Tool Calls
+      max_tool_calls:
+        anyOf:
+        - minimum: 0
+          type: integer
+        - type: 'null'
+        default: null
+        description: Maximum number of tool calls permitted
+        title: Max Tool Calls
+      expected_answer_contains:
+        default: []
+        description: Expected substrings or numerical values in Agent final response text from fixture
+        items:
+          type: string
+        title: Expected Answer Contains
+        type: array
     title: ExpectSpec
     type: object
   FaultSpec:

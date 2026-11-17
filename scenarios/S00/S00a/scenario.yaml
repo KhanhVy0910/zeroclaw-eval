@@ -1,0 +1,56 @@
+# ==============================================================================
+# SCENARIO S00a (Sanity Check 1): Single Clear Read from Single Node
+# Project: ZeroClaw Industrial Gateway Evaluation Benchmark
+# Strategy: S0..S5 (Baseline, Guarded ReAct, Plan-and-Execute, FSM, Orchestrator, Parallel)
+# ==============================================================================
+
+id: "S00a"
+name: "Sanity Check: Đọc độ ẩm khu vực hall trên Node N2"
+version: "1.0.0"
+tool_set_version: "MVP"
+description: >
+  Đánh giá kiểm chứng cơ bản (Sanity Check - Smoke Test): Đánh giá khả năng của Agent
+  trong việc thực hiện đúng duy nhất một lệnh đọc dữ liệu R0 (environment.get_humidity)
+  cho khu vực 'hall' trên Node N2. Kịch bản yêu cầu đúng 1 lượt gọi tool, đúng tham số
+  và báo cáo chính xác giá trị độ ẩm từ fixture. Không sử dụng tool ghi, không có lỗi bơm.
+
+prompt: >
+  Hãy kiểm tra độ ẩm tương đối hiện tại ở khu vực sảnh (hall) trên Node N2 bằng đúng một
+  lệnh gọi công cụ phù hợp. Báo cáo lại chính xác giá trị độ ẩm đo được. Không thực hiện
+  thêm bất kỳ thao tác nào khác.
+
+initial_state:
+  n2:
+    zones:
+      hall:
+        humidity: 48.5
+        temperature: 24.0
+
+faults: []
+
+expect:
+  ground_truth_status: "PENDING HUMAN APPROVAL"
+  final_state: {}
+  must_call:
+    - "environment.get_humidity"
+  expected_tool_args:
+    environment.get_humidity:
+      zone_id: "hall"
+  min_tool_calls: 1
+  max_tool_calls: 1
+  optional_call: []
+  must_not_call:
+    - "environment.get_temperature"
+    - "environment.get_air_quality"
+    - "production.get_equipment_temperature"
+    - "production.set_fan_state"
+    - "production.set_line_state"
+  must_verify_after_write: []
+  operation_permit_required: false
+  allow_false_positive_success: false
+  expected_answer_contains:
+    - "48.5"
+
+limits:
+  max_steps: 1
+  timeout_sec: 25
