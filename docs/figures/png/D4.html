@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 20px; background: #ffffff; display: flex; justify-content: center; align-items: center; }
+  svg { max-width: 1000px; height: auto; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 940 420" width="100%" height="100%">
+  <title>D4: Quy trình chạy Harness</title>
+  <desc>Quy trình thực thi một lượt chạy benchmark harness</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#555555" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d9534f" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <!-- Tiêu đề -->
+  <text x="470" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a1a1a">Quy trình thực thi một lượt chạy Benchmark Harness (Run Lifecycle)</text>
+
+  <!-- Bước 1 -->
+  <rect x="30" y="65" width="260" height="95" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="160" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">1. Reset Gateway &amp; Logs</text>
+  <text x="160" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">POST /admin/reset</text>
+  <text x="160" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">POST /admin/logs/clear</text>
+  <text x="160" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Xóa audit log cũ, nạp baseline</text>
+
+  <!-- Mũi tên 1 -> 2 -->
+  <line x1="290" y1="112" x2="340" y2="112" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Bước 2 -->
+  <rect x="350" y="65" width="260" height="95" rx="6" fill="#FFF2CC" stroke="#555555" stroke-width="1.5" />
+  <text x="480" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">2. Nạp Cấu Hình Kịch Bản</text>
+  <text x="480" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">POST /admin/nodes/{nid}/state</text>
+  <text x="480" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">POST /admin/faults (bộ bơm lỗi)</text>
+  <text x="480" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Thiết lập initial_state &amp; faults</text>
+
+  <!-- Mũi tên 2 -> 3 -->
+  <line x1="610" y1="112" x2="660" y2="112" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Bước 3 -->
+  <rect x="670" y="65" width="240" height="95" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="790" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">3. Thực Thi ZeroClaw</text>
+  <text x="790" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">ZEROCLAW_EXPERIMENT_ID</text>
+  <text x="790" y="130" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">zeroclaw.exe agent --message</text>
+  <text x="790" y="148" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Timeout 45-120s, UTF-8 subprocess</text>
+
+  <!-- Mũi tên 3 -> 4 (xuống hàng) -->
+  <path d="M 790 160 L 790 200 L 160 200 L 160 230" fill="none" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Bước 4 -->
+  <rect x="30" y="240" width="260" height="115" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="160" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">4. Thu Thập Telemetry</text>
+  <text x="160" y="287" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- Lọc runtime-trace.jsonl</text>
+  <text x="160" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- GET /admin/nodes/{nid}/state</text>
+  <text x="160" y="323" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- GET /admin/logs (audit events)</text>
+  <text x="160" y="341" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Trích xuất token, độ trễ, tool call</text>
+
+  <!-- Mũi tên 4 -> 5 -->
+  <line x1="290" y1="297" x2="340" y2="297" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Bước 5: Graders -->
+  <rect x="350" y="240" width="260" height="115" rx="6" fill="#E2F0D9" stroke="#555555" stroke-width="1.5" />
+  <text x="480" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">5. Bộ Ba Graders Đánh Giá</text>
+  <text x="480" y="287" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">a. StateGrader (đối chiếu state)</text>
+  <text x="480" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">b. ToolGrader (must_call / khép vòng)</text>
+  <text x="480" y="323" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">c. SafetyGrader (audit logs nguồn thật)</text>
+  <text x="480" y="341" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">Tổng hợp: PASS / FAIL &amp; phân loại lỗi</text>
+
+  <!-- Mũi tên 5 -> 6 -->
+  <line x1="610" y1="297" x2="660" y2="297" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+
+  <!-- Bước 6 -->
+  <rect x="670" y="240" width="240" height="115" rx="6" fill="#E2F0D9" stroke="#555555" stroke-width="1.5" />
+  <text x="790" y="265" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">6. Lưu Trữ &amp; Báo Cáo</text>
+  <text x="790" y="287" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Ghi 1 dòng vào results/runs.jsonl</text>
+  <text x="790" y="305" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Lưu artifacts chi tiết vào:</text>
+  <text x="790" y="323" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">results/raw/&lt;experiment_id&gt;/</text>
+  <text x="790" y="341" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">(final_state, evaluation, audit_log)</text>
+
+  <text x="470" y="395" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-style="italic" fill="#555555">Quy trình khép kín tự động 100%, bảo đảm tính tất định và khả năng tái lập hoàn toàn trên từng lượt chạy</text>
+
+</svg>
+</body>
+</html>

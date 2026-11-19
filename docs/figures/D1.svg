@@ -1,0 +1,100 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 440" width="100%" height="100%">
+  <title>D1: Kiến trúc tổng thể</title>
+  <desc>Kiến trúc tổng thể hệ thống zeroclaw-eval</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#555555" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d9534f" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <!-- Tiêu đề -->
+  <text x="480" y="32" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a1a1a">Kiến trúc tổng thể hệ thống thử nghiệm ZeroClaw Industrial Gateway</text>
+
+  <!-- Khối Harness Benchmarking -->
+  <rect x="50" y="65" width="230" height="235" rx="6" fill="#E2F0D9" stroke="#555555" stroke-width="1.5" />
+  <text x="165" y="90" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">Evaluation Harness</text>
+  <text x="165" y="110" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">(Python runner &amp; graders)</text>
+  <line x1="60" y1="120" x2="270" y2="120" stroke="#555555" stroke-width="0.8" />
+  <rect x="65" y="130" width="200" height="32" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="165" y="151" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">runner/run_scenario.py</text>
+  <rect x="65" y="172" width="200" height="32" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="165" y="193" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Bộ 3 Graders (State, Tool, Safety)</text>
+  <rect x="65" y="214" width="200" height="32" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="165" y="235" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Scenario YAML (S01, S03, S08)</text>
+  <rect x="65" y="256" width="200" height="32" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="165" y="277" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">results/runs.jsonl &amp; raw traces</text>
+
+  <!-- Khối ZeroClaw Runtime -->
+  <rect x="360" y="65" width="240" height="110" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="480" y="92" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">ZeroClaw AI Runtime</text>
+  <text x="480" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">(Rust core: commit 2f8ca597a)</text>
+  <text x="480" y="134" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Vòng lặp ReAct / Điều phối Tool</text>
+  <text x="480" y="154" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">LLM: Gemini 3.5 Flash Lite</text>
+
+  <!-- Khối WASM Component Plugins -->
+  <rect x="360" y="215" width="240" height="85" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="480" y="238" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">15 WASM Component Plugins</text>
+  <text x="480" y="256" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">(Target wasm32-wasip2)</text>
+  <text x="480" y="275" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Quyền http_client | egress 127.0.0.1</text>
+  <text x="480" y="291" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Wasmtime Cranelift JIT</text>
+
+  <!-- Khối Hardware Gateway -->
+  <rect x="680" y="65" width="240" height="155" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="800" y="88" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">Hardware Gateway</text>
+  <text x="800" y="106" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">(FastAPI tại 127.0.0.1:8000)</text>
+  <line x1="690" y1="114" x2="910" y2="114" stroke="#555555" stroke-width="0.8" />
+  <text x="800" y="132" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- API Nghiệp vụ: /api/v1/{nid}/...</text>
+  <text x="800" y="150" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- Khóa tuần tự theo node (locks.py)</text>
+  <text x="800" y="168" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- Kiểm tra an toàn 5 điều kiện</text>
+  <text x="800" y="186" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- Nhật ký lệnh: command_log.jsonl</text>
+  <text x="800" y="204" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">- Bộ bơm lỗi động: faults.py</text>
+
+  <!-- Khối Admin API -->
+  <rect x="680" y="240" width="240" height="60" rx="6" fill="#FFF2CC" stroke="#555555" stroke-width="1.5" />
+  <text x="800" y="262" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">Endpoint Quản trị (/admin)</text>
+  <text x="800" y="282" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Reset world, State verify, Approvals</text>
+
+  <!-- Khối Backend 4 Node -->
+  <rect x="250" y="340" width="670" height="80" rx="6" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="585" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">Backend Mô Phỏng 4 Node Công Nghiệp (MockBackend in-memory state)</text>
+  <rect x="265" y="372" width="145" height="38" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="337" y="388" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">N1: Production</text>
+  <text x="337" y="403" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">ESP32 DevKit</text>
+
+  <rect x="425" y="372" width="145" height="38" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="497" y="388" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">N2: Environment</text>
+  <text x="497" y="403" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Raspberry Pi Pico W</text>
+
+  <rect x="585" y="372" width="145" height="38" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="657" y="388" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">N3: Warehouse</text>
+  <text x="657" y="403" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Arduino Uno R3</text>
+
+  <rect x="745" y="372" width="160" height="38" rx="4" fill="#ffffff" stroke="#555555" stroke-width="1" />
+  <text x="825" y="388" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">N4: Health &amp; Safety</text>
+  <text x="825" y="403" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">STM32 Nucleo-F401RE</text>
+
+  <!-- Mũi tên kết nối -->
+  <!-- Harness -> ZeroClaw -->
+  <line x1="280" y1="120" x2="350" y2="120" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="315" y="113" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Khởi chạy</text>
+
+  <!-- ZeroClaw -> WASM -->
+  <line x1="480" y1="175" x2="480" y2="205" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="510" y="196" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#555555">Gọi tool</text>
+
+  <!-- WASM -> Gateway -->
+  <line x1="600" y1="245" x2="670" y2="180" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="645" y="224" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">HTTP REST</text>
+
+  <!-- Gateway -> Backend -->
+  <line x1="800" y1="220" x2="800" y2="330" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="805" y="324" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#555555">Thực thi</text>
+
+  <!-- Harness -> Admin -->
+  <path d="M 280 260 L 670 260" fill="none" stroke="#555555" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+  <text x="340" y="254" text-anchor="start" font-family="Arial, sans-serif" font-size="11" fill="#555555">Reset / Fault injection / Đọc audit log</text>
+
+</svg>

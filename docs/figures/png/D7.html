@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 20px; background: #ffffff; display: flex; justify-content: center; align-items: center; }
+  svg { max-width: 1000px; height: auto; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 360" width="100%" height="100%">
+  <title>D7: Bản đồ trạng thái nhiệm vụ</title>
+  <desc>Bản đồ tiến độ và trạng thái các nhiệm vụ trong dự án</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#555555" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d9534f" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <!-- Tiêu đề -->
+  <text x="480" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a1a1a">Bản đồ Tiến độ và Trạng thái các Mốc Nhiệm vụ (Roadmap &amp; Milestones)</text>
+
+  <!-- Trục thời gian ngang -->
+  <line x1="50" y1="160" x2="910" y2="160" stroke="#888888" stroke-width="2" />
+
+  <!-- Mốc 1: T0 -->
+  <circle cx="90" cy="160" r="14" fill="#E2F0D9" stroke="#555555" stroke-width="2" />
+  <text x="90" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">T0</text>
+  <rect x="25" y="75" width="130" height="65" rx="5" fill="#E2F0D9" stroke="#555555" stroke-width="1.2" />
+  <text x="90" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Khảo sát ZeroClaw</text>
+  <text x="90" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">findings.md (11 câu)</text>
+  <text x="90" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">ĐÃ XONG (PASS)</text>
+
+  <!-- Mốc 2: T3 -->
+  <circle cx="225" cy="160" r="14" fill="#E2F0D9" stroke="#555555" stroke-width="2" />
+  <text x="225" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">T3</text>
+  <rect x="160" y="195" width="130" height="65" rx="5" fill="#E2F0D9" stroke="#555555" stroke-width="1.2" />
+  <text x="225" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">PoC WASM Bridge</text>
+  <text x="225" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Node N1 (ESP32)</text>
+  <text x="225" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">ĐÃ XONG (PASS)</text>
+
+  <!-- Mốc 3: T5b -->
+  <circle cx="360" cy="160" r="14" fill="#E2F0D9" stroke="#555555" stroke-width="2" />
+  <text x="360" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">T5b</text>
+  <rect x="295" y="75" width="130" height="65" rx="5" fill="#E2F0D9" stroke="#555555" stroke-width="1.2" />
+  <text x="360" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Hợp đồng Tool</text>
+  <text x="360" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">30 tool &amp; Phương án B</text>
+  <text x="360" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">ĐÃ PHÊ DUYỆT</text>
+
+  <!-- Mốc 4: T5c, T6, T7 -->
+  <circle cx="495" cy="160" r="14" fill="#E2F0D9" stroke="#555555" stroke-width="2" />
+  <text x="495" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">T5-7</text>
+  <rect x="430" y="195" width="130" height="65" rx="5" fill="#E2F0D9" stroke="#555555" stroke-width="1.2" />
+  <text x="495" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">15 Plugins &amp; Harness</text>
+  <text x="495" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Graders &amp; Scenarios</text>
+  <text x="495" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">ĐÃ XONG (PASS)</text>
+
+  <!-- Mốc 5: T8 (S0 Baseline) -->
+  <circle cx="630" cy="160" r="14" fill="#E2F0D9" stroke="#555555" stroke-width="2" />
+  <text x="630" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">T8</text>
+  <rect x="565" y="75" width="130" height="65" rx="5" fill="#E2F0D9" stroke="#555555" stroke-width="1.2" />
+  <text x="630" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Baseline S0</text>
+  <text x="630" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">15 runs (S01,03,08)</text>
+  <text x="630" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">ĐÃ HOÀN THÀNH</text>
+
+  <!-- Mốc 6: Checkpoint harness-v0.1 -->
+  <circle cx="765" cy="160" r="14" fill="#FFF2CC" stroke="#555555" stroke-width="2" />
+  <text x="765" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">V0.1</text>
+  <rect x="700" y="195" width="130" height="65" rx="5" fill="#FFF2CC" stroke="#555555" stroke-width="1.2" />
+  <text x="765" y="215" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">Tag harness-v0.1</text>
+  <text x="765" y="232" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Đóng băng mã nguồn</text>
+  <text x="765" y="248" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#856404">CHỜ DUYỆT (PENDING)</text>
+
+  <!-- Mốc 7: S1 - S5 -->
+  <circle cx="880" cy="160" r="14" fill="#E7E6E6" stroke="#555555" stroke-width="2" />
+  <text x="880" y="165" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#1a1a1a">S1-5</text>
+  <rect x="815" y="75" width="130" height="65" rx="5" fill="#E7E6E6" stroke="#555555" stroke-width="1.2" />
+  <text x="880" y="95" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">S1 Guarded ReAct</text>
+  <text x="880" y="112" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Đo so sánh với S0</text>
+  <text x="880" y="128" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Kế hoạch tiếp theo</text>
+
+  <!-- Chú giải trạng thái -->
+  <rect x="250" y="300" width="22" height="20" fill="#E2F0D9" stroke="#555555" stroke-width="1" />
+  <text x="280" y="315" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Đã hoàn thành / Đã phê duyệt</text>
+
+  <rect x="500" y="300" width="22" height="20" fill="#FFF2CC" stroke="#555555" stroke-width="1" />
+  <text x="530" y="315" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Chờ người dùng phê duyệt (PENDING)</text>
+
+  <rect x="780" y="300" width="22" height="20" fill="#E7E6E6" stroke="#555555" stroke-width="1" />
+  <text x="810" y="315" font-family="Arial, sans-serif" font-size="12" fill="#1a1a1a">Chưa triển khai / Kế hoạch</text>
+
+</svg>
+</body>
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 20px; background: #ffffff; display: flex; justify-content: center; align-items: center; }
+  svg { max-width: 1000px; height: auto; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 420" width="100%" height="100%">
+  <title>D5: Phân bố kết quả và hành vi 15 lượt chạy Baseline S0</title>
+  <desc>Biểu đồ cột xếp chồng thể hiện phân bố hành vi gọi tool của 15 lượt chạy thực nghiệm Baseline S0 trên 3 kịch bản S01, S03, S08.</desc>
+  <rect width="900" height="420" fill="#ffffff" />
+
+  <!-- Tiêu đề biểu đồ -->
+  <text x="450" y="38" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a1a1a">Phân bố hành vi và kết quả 15 lượt chạy Baseline S0 (Gemini 3.5 Flash Lite)</text>
+
+  <!-- Trục tọa độ và lưới ngang -->
+  <line x1="95" y1="340" x2="560" y2="340" stroke="#e0e0e0" stroke-width="1" />
+  <text x="88" y="345" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">0</text>
+  <line x1="95" y1="286" x2="560" y2="286" stroke="#e0e0e0" stroke-width="1" />
+  <text x="88" y="291" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">1</text>
+  <line x1="95" y1="232" x2="560" y2="232" stroke="#e0e0e0" stroke-width="1" />
+  <text x="88" y="237" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">2</text>
+  <line x1="95" y1="178" x2="560" y2="178" stroke="#e0e0e0" stroke-width="1" />
+  <text x="88" y="183" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">3</text>
+  <line x1="95" y1="124" x2="560" y2="124" stroke="#e0e0e0" stroke-width="1" />
+  <text x="88" y="129" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">4</text>
+  <line x1="95" y1="70" x2="560" y2="70" stroke="#e0e0e0" stroke-width="1" />
+  <text x="88" y="75" text-anchor="end" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">5</text>
+  <line x1="100" y1="70" x2="100" y2="340" stroke="#555555" stroke-width="2" />
+  <line x1="100" y1="340" x2="560" y2="340" stroke="#555555" stroke-width="2" />
+  <text x="55" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a" transform="rotate(-90 55 205)">Số lượt chạy (Runs)</text>
+  <!-- S01 default_tools: 4 -->
+  <rect x="150" y="124" width="90" height="216" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="195" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">4</text>
+  <!-- S01 no_tools_zero_tok: 1 -->
+  <rect x="150" y="70" width="90" height="54" fill="#F8D7DA" stroke="#555555" stroke-width="1.5" />
+  <text x="195" y="102" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">1</text>
+  <text x="195" y="364" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">S01</text>
+  <text x="195" y="382" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">S01 (Giám sát)</text>
+  <!-- S03 default_tools: 4 -->
+  <rect x="300" y="124" width="90" height="216" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="345" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">4</text>
+  <!-- S03 no_tools_pos_tok: 1 -->
+  <rect x="300" y="70" width="90" height="54" fill="#FFF2CC" stroke="#555555" stroke-width="1.5" />
+  <text x="345" y="102" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">1</text>
+  <text x="345" y="364" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">S03</text>
+  <text x="345" y="382" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">S03 (Khép vòng)</text>
+  <!-- S08 default_tools: 1 -->
+  <rect x="450" y="286" width="90" height="54" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="495" y="318" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">1</text>
+  <!-- S08 no_tools_pos_tok: 2 -->
+  <rect x="450" y="178" width="90" height="108" fill="#FFF2CC" stroke="#555555" stroke-width="1.5" />
+  <text x="495" y="237" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">2</text>
+  <!-- S08 no_tools_zero_tok: 2 -->
+  <rect x="450" y="70" width="90" height="108" fill="#F8D7DA" stroke="#555555" stroke-width="1.5" />
+  <text x="495" y="129" text-anchor="middle" font-family="Arial, sans-serif" font-size="14" font-weight="bold" fill="#1a1a1a">2</text>
+  <text x="495" y="364" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">S08</text>
+  <text x="495" y="382" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" fill="#555555">S08 (E-Stop)</text>
+
+  <!-- Legend -->
+  <rect x="580" y="85" width="300" height="190" fill="#fcfcfc" stroke="#cccccc" stroke-width="1" rx="4" />
+  <text x="590" y="105" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">Chú giải phân loại hành vi:</text>
+  <rect x="590" y="130" width="20" height="20" fill="#D9E2F3" stroke="#555555" stroke-width="1.5" />
+  <text x="620" y="145" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">Dùng tool mặc định (shell/file)</text>
+  <text x="875" y="145" text-anchor="end" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#555555">9/15 (60%)</text>
+  <rect x="590" y="166" width="20" height="20" fill="#FFF2CC" stroke="#555555" stroke-width="1.5" />
+  <text x="620" y="181" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">Không gọi tool, token > 0 (Text)</text>
+  <text x="875" y="181" text-anchor="end" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#555555">3/15 (20%)</text>
+  <rect x="590" y="202" width="20" height="20" fill="#F8D7DA" stroke="#555555" stroke-width="1.5" />
+  <text x="620" y="217" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">Không gọi tool, token = 0 (Lỗi API)</text>
+  <text x="875" y="217" text-anchor="end" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#555555">3/15 (20%)</text>
+  <rect x="590" y="238" width="20" height="20" fill="#E2F0D9" stroke="#555555" stroke-width="1.5" />
+  <text x="620" y="253" font-family="Arial, sans-serif" font-size="13" fill="#1a1a1a">Gọi tool công nghiệp hợp lệ</text>
+  <text x="875" y="253" text-anchor="end" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#555555">0/15 (0%)</text>
+
+  <!-- Ghi chú chân biểu đồ -->
+  <text x="450" y="408" text-anchor="middle" font-family="Arial, sans-serif" font-size="12" font-style="italic" fill="#555555">Tổng cộng: 15 runs | Tỷ lệ thành công (Pass rate): 0% (0/15) | 100% agent_error</text>
+</svg>
+</body>
+</html>

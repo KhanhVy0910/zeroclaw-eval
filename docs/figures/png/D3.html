@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  body { margin: 0; padding: 20px; background: #ffffff; display: flex; justify-content: center; align-items: center; }
+  svg { max-width: 1000px; height: auto; }
+</style>
+</head>
+<body>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 440" width="100%" height="100%">
+  <title>D3: Luồng thực thi PoC T3</title>
+  <desc>Biểu đồ tuần tự thực thi xác minh PoC Task T3</desc>
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#555555" />
+    </marker>
+    <marker id="arrow-red" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 10 5 L 0 8.5 z" fill="#d9534f" />
+    </marker>
+  </defs>
+  <rect width="100%" height="100%" fill="#ffffff" />
+  <!-- Tiêu đề -->
+  <text x="450" y="30" text-anchor="middle" font-family="Arial, sans-serif" font-size="16" font-weight="bold" fill="#1a1a1a">Trình tự thực thi xác minh PoC một Node N1 (Task T3)</text>
+
+  <!-- Lifeline Headers -->
+  <rect x="50" y="55" width="130" height="36" rx="4" fill="#E2F0D9" stroke="#555555" stroke-width="1.2" />
+  <text x="115" y="78" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">Test Runner</text>
+
+  <rect x="220" y="55" width="130" height="36" rx="4" fill="#D9E2F3" stroke="#555555" stroke-width="1.2" />
+  <text x="285" y="78" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">ZeroClaw Agent</text>
+
+  <rect x="390" y="55" width="130" height="36" rx="4" fill="#D9E2F3" stroke="#555555" stroke-width="1.2" />
+  <text x="455" y="78" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">WASM Plugin</text>
+
+  <rect x="560" y="55" width="140" height="36" rx="4" fill="#D9E2F3" stroke="#555555" stroke-width="1.2" />
+  <text x="630" y="78" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">Gateway (N1)</text>
+
+  <rect x="730" y="55" width="130" height="36" rx="4" fill="#FFF2CC" stroke="#555555" stroke-width="1.2" />
+  <text x="795" y="78" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" font-weight="bold" fill="#1a1a1a">Admin State</text>
+
+  <!-- Lifeline Lines -->
+  <line x1="115" y1="91" x2="115" y2="425" stroke="#cccccc" stroke-width="1.5" stroke-dasharray="4,4" />
+  <line x1="285" y1="91" x2="285" y2="425" stroke="#cccccc" stroke-width="1.5" stroke-dasharray="4,4" />
+  <line x1="455" y1="91" x2="455" y2="425" stroke="#cccccc" stroke-width="1.5" stroke-dasharray="4,4" />
+  <line x1="630" y1="91" x2="630" y2="425" stroke="#cccccc" stroke-width="1.5" stroke-dasharray="4,4" />
+  <line x1="795" y1="91" x2="795" y2="425" stroke="#cccccc" stroke-width="1.5" stroke-dasharray="4,4" />
+
+  <!-- Turn 1 Header -->
+  <rect x="80" y="105" width="600" height="20" fill="#f0f4f8" rx="3" />
+  <text x="90" y="119" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">TURN 1: Đọc trạng thái dây chuyền N1 (get_status)</text>
+
+  <!-- Step 1: Runner -> Agent -->
+  <line x1="115" y1="140" x2="280" y2="140" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="195" y="135" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">Prompt: Đọc status N1</text>
+
+  <!-- Step 2: Agent -> WASM -->
+  <line x1="285" y1="165" x2="450" y2="165" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="367" y="160" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">production(action="get_status")</text>
+
+  <!-- Step 3: WASM -> Gateway -->
+  <line x1="455" y1="190" x2="625" y2="190" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="540" y="185" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">GET /api/v1/n1/production/status</text>
+
+  <!-- Step 4: Gateway -> WASM -->
+  <line x1="630" y1="210" x2="460" y2="210" stroke="#555555" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+  <text x="545" y="205" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">200 OK {"fan": 0, "line_state": "running"}</text>
+
+  <!-- Step 5: WASM -> Agent -->
+  <line x1="455" y1="225" x2="290" y2="225" stroke="#555555" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+  <text x="372" y="221" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">Trả kết quả JSON</text>
+
+  <!-- Turn 2 Header -->
+  <rect x="80" y="240" width="600" height="20" fill="#f0f4f8" rx="3" />
+  <text x="90" y="254" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">TURN 2: Bật quạt làm mát N1 (set_fan, state=true)</text>
+
+  <!-- Step 6: Runner -> Agent -->
+  <line x1="115" y1="275" x2="280" y2="275" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="195" y="270" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">Prompt: Bật quạt N1</text>
+
+  <!-- Step 7: Agent -> WASM -->
+  <line x1="285" y1="298" x2="450" y2="298" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="367" y="293" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">production(action="set_fan", state=true)</text>
+
+  <!-- Step 8: WASM -> Gateway -->
+  <line x1="455" y1="320" x2="625" y2="320" stroke="#555555" stroke-width="1.5" marker-end="url(#arrow)" />
+  <text x="540" y="315" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">POST /api/v1/n1/production/fan</text>
+
+  <!-- Step 9: Gateway updates memory state -->
+  <rect x="620" y="330" width="110" height="24" rx="3" fill="#E2F0D9" stroke="#555555" stroke-width="1" />
+  <text x="675" y="346" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#1a1a1a">fan=1, pin2=1</text>
+
+  <!-- Step 10: Gateway -> Agent -->
+  <line x1="630" y1="365" x2="290" y2="365" stroke="#555555" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow)" />
+  <text x="460" y="360" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#555555">200 OK {"fan": 1, "pin": 2} -> Agent xác nhận hoàn tất</text>
+
+  <!-- Turn 3: Ground Truth Verification -->
+  <rect x="80" y="380" width="750" height="20" fill="#FFF2CC" rx="3" />
+  <text x="90" y="394" font-family="Arial, sans-serif" font-size="12" font-weight="bold" fill="#1a1a1a">XÁC MINH GROUND TRUTH: Kênh Quản trị độc lập</text>
+
+  <line x1="115" y1="412" x2="790" y2="412" stroke="#28a745" stroke-width="1.8" marker-end="url(#arrow)" />
+  <text x="455" y="407" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" font-weight="bold" fill="#28a745">GET /admin/nodes/n1/state -> data.fan == 1 (PASS 100%)</text>
+
+</svg>
+</body>
+</html>
